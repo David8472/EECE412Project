@@ -19,9 +19,10 @@ public class RSA_encrypt {
 		Key public_key = keys.getPublic();
 		Key private_key = keys.getPrivate();
 	
-		byte[] ciphertext = encrypt("hello and goodbye", public_key);
+		byte[] ciphertext = encrypt("asdfdsgfsasdfsfaf", public_key);
 		System.out.println("cipher is " + ciphertext);
-	
+		String plaintext = decrypt(ciphertext, private_key);
+		System.out.println("plaintext was " + plaintext);
 	}
 	
 	  public static byte[] encrypt(String plaintext, Key public_key) throws NoSuchAlgorithmException{
@@ -38,5 +39,21 @@ public class RSA_encrypt {
 		  }
 	
 
+	  public static String decrypt(byte[] ciphertext, Key private_key){
+		  
+		  byte[] plaintext = null;
+		  
+		  try{
+			  Cipher c = Cipher.getInstance("RSA");
+			  c.init(Cipher.DECRYPT_MODE, private_key);
+			  plaintext = c.doFinal(ciphertext);
+		  }catch(Exception e){
+		  
+		  
+		  }
+		  
+		return new String(plaintext); 
+	  }
+	  
 	
 }
