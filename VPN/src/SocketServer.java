@@ -1,3 +1,4 @@
+import java.awt.Toolkit;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -34,6 +35,9 @@ public class SocketServer {
 				try {
 					while (true) {
 						Socket clientSocket = serverSocket.accept();
+						GUI.getProgressBar().setIndeterminate(false);
+						GUI.getProgressBar().setValue(100);
+						Toolkit.getDefaultToolkit().beep();
 						clientProcessingPool
 								.submit(new ClientTask(clientSocket));
 						System.out

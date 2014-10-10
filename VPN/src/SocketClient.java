@@ -15,12 +15,10 @@ public class SocketClient {
 		this.port = port;
 	}
 
-	public void connect() throws UnknownHostException, IOException,
-			NullPointerException {
-		System.out.println("Attempting to connect to " + hostname + ":" + port);
+	public void connect() throws UnknownHostException, IOException {
 		displayText("Attempting to connect to " + hostname + ":" + port);
 		socketClient = new Socket(hostname, port);
-		System.out.println("Connection Established");
+		displayText("Connection Established");
 	}
 
 	public void readResponse() throws IOException {
@@ -34,7 +32,12 @@ public class SocketClient {
 		}
 	}
 
-	public void displayText(String s) {
+	/**
+	 * Display text to textArea within Gui
+	 * 
+	 * @param s
+	 */
+	public static void displayText(String s) {
 		GUI.getTextArea().append("\n" + s);
 	}
 
@@ -48,6 +51,7 @@ public class SocketClient {
 			client.readResponse();
 
 		} catch (UnknownHostException e) {
+			displayText("Host unknown. Cannot establish connection");
 			System.err.println("Host unknown. Cannot establish connection");
 		} catch (IOException e) {
 			System.err
