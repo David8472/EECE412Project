@@ -1,18 +1,30 @@
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.EventQueue;
+import java.awt.TextArea;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
-import java.awt.TextArea;
-import javax.swing.JProgressBar;
 
 public class GUI {
 
 	private JFrame frame;
+
+	final static String CLIENTPANEL = "Client";
+	final static String SERVERPANEL = "Server";
+	final static int extraWindowWidth = 100;
+	private static JTextField hostnameField;
+	private static JTextField hostMessageField;
 
 	/**
 	 * Launch the application.
@@ -46,12 +58,6 @@ public class GUI {
 		frame.getContentPane().setLayout(new BorderLayout());
 	}
 
-	final static String CLIENTPANEL = "Client";
-	final static String SERVERPANEL = "Server";
-	final static int extraWindowWidth = 100;
-	private JTextField hostnameField;
-	private JTextField hostMessageField;
-
 	public void addClientServerPane(Container pane) {
 		JTabbedPane tabbedPane = new JTabbedPane();
 
@@ -59,17 +65,37 @@ public class GUI {
 		JPanel clientPanel = new JPanel();
 
 		hostnameField = new JTextField();
-		hostnameField.setText("Please enter host address.");
-		clientPanel.add(hostnameField);
+		// hostnameField.setText("Please enter host address.");
+		hostnameField.setText("localhost:9990");
 		hostnameField.setColumns(10);
+		clientPanel.add(hostnameField);
 
-		clientPanel.add(new JButton("Connect to host"));
+		JButton button = new JButton("Connect to host");
+		button.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				try {
+					ArrayList<String> strings = GUI.getHostParams();
+					SocketClient sc = new SocketClient(strings.get(0), Integer
+							.valueOf(strings.get(1)));
+					sc.connect();
+				} catch (UnknownHostException e) {
+					System.err
+							.println("Host unknown. Cannot establish connection");
+				} catch (IOException e) {
+					System.err
+							.println("Cannot establish connection. Server may not be up."
+									+ e.getMessage());
+				}
+			}
+		});
+		clientPanel.add(button);
 
 		JPanel serverPanel = new JPanel();
 
 		tabbedPane.addTab(CLIENTPANEL, clientPanel);
 		tabbedPane.addTab(SERVERPANEL, serverPanel);
-		
+
 		JProgressBar progressBar = new JProgressBar();
 		serverPanel.add(progressBar);
 
@@ -80,19 +106,19 @@ public class GUI {
 	public void addDisplayPane(Container pane) {
 		JPanel displayPane = new JPanel();
 		displayPane.setLayout(new BorderLayout(0, 0));
-		
+
 		JPanel panel = new JPanel();
 		displayPane.add(panel, BorderLayout.NORTH);
-		
+
 		hostMessageField = new JTextField();
 		panel.add(hostMessageField);
 		hostMessageField.setColumns(10);
-		
+
 		JButton btnSendMessage = new JButton("Send message");
 		panel.add(btnSendMessage);
-		
+
 		pane.add(displayPane, BorderLayout.SOUTH);
-		
+
 		TextArea textArea = new TextArea();
 		displayPane.add(textArea);
 	}
@@ -113,4 +139,18 @@ public class GUI {
 		frame.setVisible(true);
 		frame.setResizable(false);
 	}
+
+	public static JTextField getHostnameField() {
+		return hostnameField;
+	}
+
+	/**
+	 * Gets hosts name and port
+	 */
+	public static ArrayList<String> getHostParams() {
+		String s = getHostnameField().getText();
+		String[] strings = s.split(":");
+		return new ArrayList<>(Arrays.asList(strings[0], strings[1]));
+	}
+
 }
