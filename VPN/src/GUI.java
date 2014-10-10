@@ -26,6 +26,12 @@ public class GUI {
 	private static JTextField hostnameField;
 	private static JTextField hostMessageField;
 
+	private static SocketClient sc;
+	private static SocketServer ss;
+	private static int portNumber = 9990;
+
+	private static TextArea textArea;
+
 	/**
 	 * Launch the application.
 	 */
@@ -76,7 +82,7 @@ public class GUI {
 			public void actionPerformed(ActionEvent ae) {
 				try {
 					ArrayList<String> strings = GUI.getHostParams();
-					SocketClient sc = new SocketClient(strings.get(0), Integer
+					sc = new SocketClient(strings.get(0), Integer
 							.valueOf(strings.get(1)));
 					sc.connect();
 				} catch (UnknownHostException e) {
@@ -96,8 +102,31 @@ public class GUI {
 		tabbedPane.addTab(CLIENTPANEL, clientPanel);
 		tabbedPane.addTab(SERVERPANEL, serverPanel);
 
+		JButton btnHostServer = new JButton("Host Server");
+		btnHostServer.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				try {
+					// initializing the Socket Server
+					ss = new SocketServer(portNumber);
+					ss.start();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		serverPanel.add(btnHostServer);
+
 		JProgressBar progressBar = new JProgressBar();
 		serverPanel.add(progressBar);
+
+		JButton btnEndServer = new JButton("End Server");
+		btnEndServer.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				ss.close();
+			}
+		});
+		serverPanel.add(btnEndServer);
 
 		pane.add(tabbedPane, BorderLayout.CENTER);
 
@@ -119,7 +148,7 @@ public class GUI {
 
 		pane.add(displayPane, BorderLayout.SOUTH);
 
-		TextArea textArea = new TextArea();
+		textArea = new TextArea();
 		displayPane.add(textArea);
 	}
 
@@ -142,6 +171,10 @@ public class GUI {
 
 	public static JTextField getHostnameField() {
 		return hostnameField;
+	}
+
+	public static TextArea getTextArea() {
+		return textArea;
 	}
 
 	/**

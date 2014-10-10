@@ -15,8 +15,10 @@ public class SocketClient {
 		this.port = port;
 	}
 
-	public void connect() throws UnknownHostException, IOException {
+	public void connect() throws UnknownHostException, IOException,
+			NullPointerException {
 		System.out.println("Attempting to connect to " + hostname + ":" + port);
+		displayText("Attempting to connect to " + hostname + ":" + port);
 		socketClient = new Socket(hostname, port);
 		System.out.println("Connection Established");
 	}
@@ -30,6 +32,10 @@ public class SocketClient {
 		while ((userInput = stdIn.readLine()) != null) {
 			System.out.println(userInput);
 		}
+	}
+
+	public void displayText(String s) {
+		GUI.getTextArea().append("\n" + s);
 	}
 
 	public static void main(String arg[]) {
