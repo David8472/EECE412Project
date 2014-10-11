@@ -1,20 +1,11 @@
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.EventQueue;
-import java.awt.TextArea;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
 
 public class GUI {
 
@@ -85,6 +76,7 @@ public class GUI {
 					sc = new SocketClient(strings.get(0), Integer
 							.valueOf(strings.get(1)));
 					sc.connect();
+                    sc.readResponse();
 				} catch (UnknownHostException e) {
 					System.err
 							.println("Host unknown. Cannot establish connection");
@@ -146,6 +138,17 @@ public class GUI {
 		JButton btnSendMessage = new JButton("Send message");
 		panel.add(btnSendMessage);
 
+        btnSendMessage.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                try {
+
+                } catch (Exception e) {
+
+                }
+            }
+        });
+
 		pane.add(displayPane, BorderLayout.SOUTH);
 
 		textArea = new TextArea();
@@ -183,7 +186,7 @@ public class GUI {
 	public static ArrayList<String> getHostParams() {
 		String s = getHostnameField().getText();
 		String[] strings = s.split(":");
-		return new ArrayList<>(Arrays.asList(strings[0], strings[1]));
+		return new ArrayList<String>(Arrays.asList(strings[0], strings[1]));
 	}
 
 }

@@ -1,6 +1,4 @@
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -75,7 +73,10 @@ public class SocketServer {
 			// Do whatever required to process the client's request
 
 			try {
-				clientSocket.close();
+                clientSocket.setKeepAlive(true);
+                sendWelcomeMessage(clientSocket);
+//                readMessage(clientSocket);
+//				clientSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -89,6 +90,14 @@ public class SocketServer {
 		writer.flush();
 		writer.close();
 	}
+
+    private void readMessage(Socket client) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                client.getInputStream()));
+
+        String in = reader.readLine();
+        System.out.print(in);
+    }
 
 	/**
 	 * Creates a SocketServer object and starts the server.

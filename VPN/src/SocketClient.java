@@ -1,6 +1,4 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
@@ -34,6 +32,14 @@ public class SocketClient {
 		}
 	}
 
+    public void sendClientMessage() throws IOException {
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+                socketClient.getOutputStream()));
+        writer.write("I'm the client message");
+        writer.flush();
+        writer.close();
+    }
+
 	public void displayText(String s) {
 		GUI.getTextArea().append("\n" + s);
 	}
@@ -44,10 +50,11 @@ public class SocketClient {
 		try {
 			// trying to establish connection to the server
 			client.connect();
+            client.sendClientMessage();
 			// if successful, read response from server
 			client.readResponse();
 
-		} catch (UnknownHostException e) {
+        } catch (UnknownHostException e) {
 			System.err.println("Host unknown. Cannot establish connection");
 		} catch (IOException e) {
 			System.err
