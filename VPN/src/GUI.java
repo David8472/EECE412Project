@@ -24,13 +24,20 @@ public class GUI {
 	final static String SERVERPANEL = "Server";
 	final static int extraWindowWidth = 100;
 	private static JTextField hostnameField;
-	private static JTextField hostMessageField;
+	private static JTextField clientMessageField;
+	private static TextArea clientText;
+
+	private static JTextField serverMessageField;
+	private static TextArea serverText;
+
+	private static JProgressBar progressBar;
 
 	private static SocketClient sc;
 	private static SocketServer ss;
 	private static int portNumber = 9990;
 
-	private static TextArea textArea;
+
+	private JTextField clientPort;
 
 	/**
 	 * Launch the application.
@@ -66,18 +73,37 @@ public class GUI {
 
 	public void addClientServerPane(Container pane) {
 		JTabbedPane tabbedPane = new JTabbedPane();
+		addClientPane(tabbedPane);
+		addServerPane(tabbedPane);
+		pane.add(tabbedPane, BorderLayout.CENTER);
+	}
 
-		// Create the "cards".
+	private void addClientPane(JTabbedPane parent) {
+		// Create base panel
 		JPanel clientPanel = new JPanel();
+		clientPanel.setLayout(new BorderLayout(0, 0));
 
+		// Client base panel
+		JPanel clientConnectionPanel = new JPanel();
+		clientPanel.add(clientConnectionPanel, BorderLayout.NORTH);
+
+		// Host field
 		hostnameField = new JTextField();
+		clientConnectionPanel.add(hostnameField);
 		// hostnameField.setText("Please enter host address.");
 		hostnameField.setText("localhost:9990");
 		hostnameField.setColumns(10);
-		clientPanel.add(hostnameField);
 
-		JButton button = new JButton("Connect to host");
-		button.addActionListener(new ActionListener() {
+		// port field
+		clientPort = new JTextField();
+		clientPort.setText("Port number.");
+		clientConnectionPanel.add(clientPort);
+		clientPort.setColumns(10);
+
+		// Client connect
+		JButton clientConnect = new JButton("Connect to host");
+		clientConnectionPanel.add(clientConnect);
+		clientConnect.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
@@ -86,70 +112,93 @@ public class GUI {
 							.valueOf(strings.get(1)));
 					sc.connect();
 				} catch (UnknownHostException e) {
-					System.err
-							.println("Host unknown. Cannot establish connection");
+					SocketClient
+							.displayText("Host unknown. Cannot establish connection");
 				} catch (IOException e) {
-					System.err
-							.println("Cannot establish connection. Server may not be up."
-									+ e.getMessage());
+					SocketClient
+							.displayText("Cannot establish connection. Server may not be up.");
 				}
 			}
 		});
-		clientPanel.add(button);
 
+		// Client message panel
+		JPanel clientMsgPanel = new JPanel();
+		clientPanel.add(clientMsgPanel, BorderLayout.CENTER);
+
+		// Client message text field
+		clientMessageField = new JTextField();
+		clientMsgPanel.add(clientMessageField);
+		clientMessageField.setColumns(10);
+
+		// Client button to send message
+		JButton clientSendMessage = new JButton("Send message");
+		clientMsgPanel.add(clientSendMessage);
+		JPanel clientDisplay = new JPanel();
+		clientPanel.add(clientDisplay, BorderLayout.SOUTH);
+		clientDisplay.setLayout(new BorderLayout(0, 0));
+
+		// Client display
+		clientText = new TextArea("Hello World.");
+		clientDisplay.add(clientText);
+
+		parent.addTab(CLIENTPANEL, clientPanel);
+	}
+
+	private void addServerPane(JTabbedPane parent) {
 		JPanel serverPanel = new JPanel();
+		parent.addTab(SERVERPANEL, serverPanel);
+		serverPanel.setLayout(new BorderLayout(0, 0));
 
-		tabbedPane.addTab(CLIENTPANEL, clientPanel);
-		tabbedPane.addTab(SERVERPANEL, serverPanel);
+		JPanel serverConnectionPanel = new JPanel();
+		serverPanel.add(serverConnectionPanel, BorderLayout.NORTH);
 
-		JButton btnHostServer = new JButton("Host Server");
-		btnHostServer.addActionListener(new ActionListener() {
+		progressBar = new JProgressBar();
+		serverConnectionPanel.add(progressBar);
+		
+		JButton hostServer = new JButton("Host Server");
+		hostServer.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				try {
 					// initializing the Socket Server
 					ss = new SocketServer(portNumber);
 					ss.start();
+					progressBar.setIndeterminate(true);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 		});
-		serverPanel.add(btnHostServer);
+		serverConnectionPanel.add(hostServer);
 
-		JProgressBar progressBar = new JProgressBar();
-		serverPanel.add(progressBar);
-
-		JButton btnEndServer = new JButton("End Server");
-		btnEndServer.addActionListener(new ActionListener() {
+		JButton endServer = new JButton("End Server");
+		endServer.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				ss.close();
 			}
 		});
-		serverPanel.add(btnEndServer);
+		serverConnectionPanel.add(endServer);
 
-		pane.add(tabbedPane, BorderLayout.CENTER);
+		// Server message panel
+		JPanel serverMsgPanel = new JPanel();
+		serverPanel.add(serverMsgPanel, BorderLayout.CENTER);
 
-	}
+		// Server message text field
+		serverMessageField = new JTextField();
+		serverMsgPanel.add(serverMessageField);
+		serverMessageField.setColumns(10);
 
-	public void addDisplayPane(Container pane) {
-		JPanel displayPane = new JPanel();
-		displayPane.setLayout(new BorderLayout(0, 0));
+		// Server button to send message
+		JButton serverSendMessage = new JButton("Send message");
+		serverMsgPanel.add(serverSendMessage);
+		
+		JPanel serverDisplay = new JPanel();
+		serverPanel.add(serverDisplay, BorderLayout.SOUTH);
+		serverDisplay.setLayout(new BorderLayout(0, 0));
 
-		JPanel panel = new JPanel();
-		displayPane.add(panel, BorderLayout.NORTH);
-
-		hostMessageField = new JTextField();
-		panel.add(hostMessageField);
-		hostMessageField.setColumns(10);
-
-		JButton btnSendMessage = new JButton("Send message");
-		panel.add(btnSendMessage);
-
-		pane.add(displayPane, BorderLayout.SOUTH);
-
-		textArea = new TextArea();
-		displayPane.add(textArea);
+		// Server display
+		serverText = new TextArea("Hello Server.");
+		serverDisplay.add(serverText);
 	}
 
 	private static void createAndShowGUI() {
@@ -160,7 +209,6 @@ public class GUI {
 		// Create and set up the content pane.
 		GUI applicationGUI = new GUI();
 		applicationGUI.addClientServerPane(frame.getContentPane());
-		applicationGUI.addDisplayPane(frame.getContentPane());
 
 		// Display the window.
 		frame.pack();
@@ -174,9 +222,13 @@ public class GUI {
 	}
 
 	public static TextArea getTextArea() {
-		return textArea;
+		return clientText;
 	}
 
+	public static JProgressBar getProgressBar() {
+		return progressBar;
+	}
+	
 	/**
 	 * Gets hosts name and port
 	 */
