@@ -1,6 +1,5 @@
-import java.io.BufferedWriter;
+import java.awt.*;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -21,7 +20,6 @@ public class SocketServer {
 	}
 
 	public void start() throws IOException {
-		System.out.println("Starting the socket server at port:" + port);
 		serverSocket = new ServerSocket(port);
 
 		final ExecutorService clientProcessingPool = Executors
@@ -30,12 +28,16 @@ public class SocketServer {
 		Runnable serverTask = new Runnable() {
 			@Override
 			public void run() {
+
 				System.out.println("Waiting for clients...");
                 Socket client = null;
 
 				try {
 					while (true) {
 						Socket clientSocket = serverSocket.accept();
+						GUI.getProgressBar().setIndeterminate(false);
+						GUI.getProgressBar().setValue(100);
+						Toolkit.getDefaultToolkit().beep();
 						clientProcessingPool
 								.submit(new SocketClientHandler(clientSocket));
 						System.out
@@ -47,7 +49,6 @@ public class SocketServer {
 				} catch (Exception e) {
 					System.err
 							.println("Unable to process client request. Socket closed");
-					// e.printStackTrace();
 				}
 			}
 		};
@@ -57,62 +58,34 @@ public class SocketServer {
 		serverThread.start();
 	}
 
-	public void close() {
-		try {
-			serverSocket.close();
-		} catch (IOException e) {
-			System.err.println("Port has not been opened");
-		}
+	public void close() throws IOException, NullPointerException {
+		serverSocket.close();
+		GUI.getProgressBar().setIndeterminate(false);
 	}
 
-//    private class ClientTask implements Runnable {
-//        private final Socket clientSocket;
+//	private class ClientTask implements Runnable {
+//		private final Socket clientSocket;
 //
-//        private ClientTask(Socket clientSocket) {
-//            this.clientSocket = clientSocket;
-//        }
+//		private ClientTask(Socket clientSocket) {
+//			this.clientSocket = clientSocket;
+//		}
 //
-//        @Override
-//             public void run() {
-//        System.out.println("Got a client !");
+//		@Override
+//		public void run() {
+//			System.out.println("Got a client !");
 //
-//        // Do whatever required to process the client's request
+//			// Do whatever required to process the client's request
 //
-//        try {
-//            String userInput;
-//            BufferedReader stdIn = new BufferedReader(new InputStreamReader(
-//                    clientSocket.getInputStream()));
-//            while ((userInput = stdIn.readLine()) != null) {
-//                if (userInput.equals("TIME?")) {
-//                    System.out
-//                            .println("REQUEST TO SEND TIME RECEIVED. SENDING CURRENT TIME");
-//
-//
-//                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-//                            clientSocket.getOutputStream()));
-//                    writer.write(new Date().toString());
-//                    writer.flush();
-//                    writer.close();
-//
-//                    break;
-//                }
-//                System.out.println(userInput);
-//            }
-//            clientSocket.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//}
+//			try {
+//				clientSocket.close();
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+//		}
+//	}
 
+			// Do whatever required to process the client's request
 
-	private void sendWelcomeMessage(Socket client) throws IOException {
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-				client.getOutputStream()));
-		writer.write("Hello. You are connected to a Simple Socket Server. What is your name?");
-		writer.flush();
-		writer.close();
-	}
 	/**
 	 * Creates a SocketServer object and starts the server.
 	 *
@@ -126,7 +99,6 @@ public class SocketServer {
 			// initializing the Socket Server
 			SocketServer socketServer = new SocketServer(portNumber);
 			socketServer.start();
-
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
