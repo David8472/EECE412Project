@@ -76,6 +76,7 @@ public class GUI {
 					sc = new SocketClient(strings.get(0), Integer
 							.valueOf(strings.get(1)));
 					sc.connect();
+                    sc.askForTime();
                     sc.readResponse();
 				} catch (UnknownHostException e) {
 					System.err

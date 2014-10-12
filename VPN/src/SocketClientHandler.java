@@ -16,10 +16,11 @@ public class SocketClientHandler implements Runnable {
 
 	@Override
 	public void run() {
+        System.out.println("Got a client !");
+
 		try {
-			System.out.println("Thread started with name:"
-					+ Thread.currentThread().getName());
 			readResponse();
+            client.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {

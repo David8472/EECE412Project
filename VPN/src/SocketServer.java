@@ -1,4 +1,6 @@
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -29,26 +31,20 @@ public class SocketServer {
 			@Override
 			public void run() {
 				System.out.println("Waiting for clients...");
+                Socket client = null;
+
 				try {
 					while (true) {
 						Socket clientSocket = serverSocket.accept();
 						clientProcessingPool
-								.submit(new ClientTask(clientSocket));
+								.submit(new SocketClientHandler(clientSocket));
 						System.out
 								.println("The following client has connected:"
 										+ clientSocket.getInetAddress()
 												.getCanonicalHostName());
 
-//                        DataInputStream din = new DataInputStream( clientSocket.getInputStream());
-//                        String message = din.readUTF();
-//                        System.out.println(message);
-//                        Thread thread = new Thread(new SocketClientHandler(clientSocket));
-//                        thread.start();
-
-//                        SocketClientHandler handler = new SocketClientHandler(clientSocket);
-//                        clientProcessingPool.submit(new ClientHandlerTask(handler));
 					}
-				} catch (IOException e) {
+				} catch (Exception e) {
 					System.err
 							.println("Unable to process client request. Socket closed");
 					// e.printStackTrace();
@@ -69,48 +65,46 @@ public class SocketServer {
 		}
 	}
 
-    private class ClientTask implements Runnable {
-        private final Socket clientSocket;
+//    private class ClientTask implements Runnable {
+//        private final Socket clientSocket;
+//
+//        private ClientTask(Socket clientSocket) {
+//            this.clientSocket = clientSocket;
+//        }
+//
+//        @Override
+//             public void run() {
+//        System.out.println("Got a client !");
+//
+//        // Do whatever required to process the client's request
+//
+//        try {
+//            String userInput;
+//            BufferedReader stdIn = new BufferedReader(new InputStreamReader(
+//                    clientSocket.getInputStream()));
+//            while ((userInput = stdIn.readLine()) != null) {
+//                if (userInput.equals("TIME?")) {
+//                    System.out
+//                            .println("REQUEST TO SEND TIME RECEIVED. SENDING CURRENT TIME");
+//
+//
+//                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+//                            clientSocket.getOutputStream()));
+//                    writer.write(new Date().toString());
+//                    writer.flush();
+//                    writer.close();
+//
+//                    break;
+//                }
+//                System.out.println(userInput);
+//            }
+//            clientSocket.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+//}
 
-        private ClientTask(Socket clientSocket) {
-            this.clientSocket = clientSocket;
-        }
-
-        @Override
-        public void run() {
-            System.out.println("Got a client !");
-
-            // Do whatever required to process the client's request
-
-            try {
-                sendWelcomeMessage(clientSocket);
-                clientSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-	private class ClientHandlerTask implements Runnable {
-		private final SocketClientHandler handler;
-
-		private ClientHandlerTask(SocketClientHandler handler) {
-			this.handler = handler;
-		}
-
-		@Override
-		public void run() {
-			System.out.println("Handler");
-
-			// Do whatever required to process the client's request
-
-			try {
-				handler.readResponse();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
 
 	private void sendWelcomeMessage(Socket client) throws IOException {
 		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
@@ -119,18 +113,9 @@ public class SocketServer {
 		writer.flush();
 		writer.close();
 	}
-
-//    private void readMessage(Socket client) throws IOException {
-//        BufferedReader reader = new BufferedReader(new InputStreamReader(
-//                client.getInputStream()));
-//
-//        String in = reader.readLine();
-//        System.out.println("!!!" + in);
-//    }
-
 	/**
 	 * Creates a SocketServer object and starts the server.
-	 * 
+	 *
 	 * @param args
 	 */
 	public static void main(String[] args) {
