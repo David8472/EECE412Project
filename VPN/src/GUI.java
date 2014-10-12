@@ -1,11 +1,24 @@
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.EventQueue;
+import java.awt.TextArea;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Enumeration;
+
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 
 public class GUI {
 
@@ -14,10 +27,13 @@ public class GUI {
 	final static String CLIENTPANEL = "Client";
 	final static String SERVERPANEL = "Server";
 	final static int extraWindowWidth = 100;
+
 	private static JTextField hostnameField;
+	private JTextField clientPort;
 	private static JTextField clientMessageField;
 	private static TextArea clientText;
 
+	private static JTextField serverPort;
 	private static JTextField serverMessageField;
 	private static TextArea serverText;
 
@@ -25,9 +41,8 @@ public class GUI {
 
 	private static SocketClient sc;
 	private static SocketServer ss;
-	private static int portNumber = 9990;
 
-	private JTextField clientPort;
+	// private static int portNumber = 9990;
 
 	/**
 	 * Launch the application.
@@ -66,6 +81,7 @@ public class GUI {
 		addClientPane(tabbedPane);
 		addServerPane(tabbedPane);
 		pane.add(tabbedPane, BorderLayout.CENTER);
+		addIpPane(pane);
 	}
 
 	private void addClientPane(JTabbedPane parent) {
@@ -81,12 +97,12 @@ public class GUI {
 		hostnameField = new JTextField();
 		clientConnectionPanel.add(hostnameField);
 		// hostnameField.setText("Please enter host address.");
-		hostnameField.setText("localhost:9990");
+		hostnameField.setText("localhost");
 		hostnameField.setColumns(10);
 
-		// port field
+		// client port field
 		clientPort = new JTextField();
-		clientPort.setText("Port number.");
+		clientPort.setText("9990");
 		clientConnectionPanel.add(clientPort);
 		clientPort.setColumns(10);
 
@@ -97,17 +113,15 @@ public class GUI {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				try {
-					ArrayList<String> strings = GUI.getHostParams();
-					sc = new SocketClient(strings.get(0), Integer
-							.valueOf(strings.get(1)));
+					String hostName = hostnameField.getText();
+					int hostPort = Integer.valueOf(clientPort.getText());
+					sc = new SocketClient(hostName, hostPort);
 					sc.connect();
 					sc.readResponse();
 				} catch (UnknownHostException e) {
-					SocketClient
-							.displayText("Host unknown. Cannot establish connection");
+					displayClientText("*Host unknown. Cannot establish connection*");
 				} catch (IOException e) {
-					SocketClient
-							.displayText("Cannot establish connection. Server may not be up.");
+					displayClientText("*Cannot establish connection. Server may not be up*");
 				}
 			}
 		});
@@ -143,63 +157,88 @@ public class GUI {
 		JPanel serverConnectionPanel = new JPanel();
 		serverPanel.add(serverConnectionPanel, BorderLayout.NORTH);
 
-		progressBar = new JProgressBar();
-		serverConnectionPanel.add(progressBar);
-
+		// Button to host server connection
 		JButton hostServer = new JButton("Host Server");
 		hostServer.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				try {
+					int portNumber = Integer.valueOf(GUI.getServerPort()
+							.getText());
 					// initializing the Socket Server
 					ss = new SocketServer(portNumber);
 					ss.start();
+					displayServerText("Starting the socket server at port:"
+							+ portNumber);
 					progressBar.setIndeterminate(true);
 				} catch (IOException e) {
 					e.printStackTrace();
+				} catch (NumberFormatException e) {
+					displayServerText("*Invalid port number*");
+				} catch (IllegalArgumentException e) {
+					displayServerText("*Port number out of range*");
 				}
 			}
 		});
-		serverConnectionPanel.add(hostServer);
 
+		// Button to end server connection
 		JButton endServer = new JButton("End Server");
 		endServer.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				ss.close();
-			}
-		});
-		serverPanel.add(endServer);
-	}
-
-	public void addDisplayPane(Container pane) {
-		JPanel displayPane = new JPanel();
-		displayPane.setLayout(new BorderLayout(0, 0));
-
-		JPanel panel = new JPanel();
-		displayPane.add(panel, BorderLayout.NORTH);
-
-		clientMessageField = new JTextField();
-		panel.add(clientMessageField);
-		clientMessageField.setColumns(10);
-
-		JButton btnSendMessage = new JButton("Send message");
-		panel.add(btnSendMessage);
-
-		btnSendMessage.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ae) {
 				try {
-
-				} catch (Exception e) {
-
+					ss.close();
+				} catch (NullPointerException | IOException e1) {
+					displayServerText("*Port has not been opened*");
 				}
 			}
 		});
+		serverConnectionPanel.setLayout(new BorderLayout(0, 0));
 
-		pane.add(displayPane, BorderLayout.SOUTH);
+		// buttonPane to hold server buttons
+		JPanel buttonPane = new JPanel();
+		buttonPane.setLayout(new BoxLayout(buttonPane, BoxLayout.Y_AXIS));
+		buttonPane.add(hostServer);
+		buttonPane.add(endServer);
 
-		clientText = new TextArea();
-		displayPane.add(clientText);
+		// server port field
+		serverPort = new JTextField();
+		serverPort.setText("9990");
+		serverPort.setColumns(10);
+
+		progressBar = new JProgressBar();
+
+		// SidePane to show txtfield and progress
+		JPanel serverSidePane = new JPanel();
+		serverSidePane
+				.setLayout(new BoxLayout(serverSidePane, BoxLayout.Y_AXIS));
+		serverSidePane.add(serverPort);
+		serverSidePane.add(progressBar);
+
+		JSplitPane splitPane = new JSplitPane();
+		splitPane.setLeftComponent(buttonPane);
+		splitPane.setRightComponent(serverSidePane);
+		serverConnectionPanel.add(splitPane);
+
+		// Server message panel
+		JPanel serverMsgPanel = new JPanel();
+		serverPanel.add(serverMsgPanel, BorderLayout.CENTER);
+
+		// Server message text field
+		serverMessageField = new JTextField();
+		serverMsgPanel.add(serverMessageField);
+		serverMessageField.setColumns(10);
+
+		// Server button to send message
+		JButton serverSendMessage = new JButton("Send message");
+		serverMsgPanel.add(serverSendMessage);
+
+		JPanel serverDisplay = new JPanel();
+		serverPanel.add(serverDisplay, BorderLayout.SOUTH);
+		serverDisplay.setLayout(new BorderLayout(0, 0));
+
+		// Server display
+		serverText = new TextArea("Hello Server.");
+		serverDisplay.add(serverText);
 	}
 
 	private static void createAndShowGUI() {
@@ -218,25 +257,56 @@ public class GUI {
 		frame.setResizable(false);
 	}
 
-	public static JTextField getHostnameField() {
-		return hostnameField;
+	private void addIpPane(Container pane) {
+		// Get ip button
+		JButton getIpButton = new JButton("Get IP");
+		getIpButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				getIP();
+			}
+		});
+		JPanel ipPane = new JPanel();
+		ipPane.add(getIpButton);
+		pane.add(ipPane, BorderLayout.NORTH);
 	}
 
-	public static TextArea getTextArea() {
-		return clientText;
+	// Retrieves list of ips and displays to text
+	private void getIP() {
+		try {
+			Enumeration<NetworkInterface> e = NetworkInterface
+					.getNetworkInterfaces();
+			while (e.hasMoreElements()) {
+				NetworkInterface n = (NetworkInterface) e.nextElement();
+				Enumeration<InetAddress> ee = n.getInetAddresses();
+				while (ee.hasMoreElements()) {
+					InetAddress i = (InetAddress) ee.nextElement();
+					String s = i.getHostAddress();
+					if (!s.contains("fe")) {
+						displayClientText(i.getHostAddress());
+						displayServerText(i.getHostAddress());
+					}
+				}
+			}
+		} catch (SocketException e) {
+			displayClientText("*Socket error*");
+			displayServerText("*Socket error*");
+		}
+	}
+
+	public static void displayClientText(String s) {
+		clientText.append("\n" + s);
+	}
+
+	public static void displayServerText(String s) {
+		serverText.append("\n" + s);
+	}
+
+	public static JTextField getServerPort() {
+		return serverPort;
 	}
 
 	public static JProgressBar getProgressBar() {
 		return progressBar;
 	}
-
-	/**
-	 * Gets hosts name and port
-	 */
-	public static ArrayList<String> getHostParams() {
-		String s = getHostnameField().getText();
-		String[] strings = s.split(":");
-		return new ArrayList<String>(Arrays.asList(strings[0], strings[1]));
-	}
-
 }
