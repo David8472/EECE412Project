@@ -1,20 +1,11 @@
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.EventQueue;
-import java.awt.TextArea;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
 
 public class GUI {
 
@@ -35,7 +26,6 @@ public class GUI {
 	private static SocketClient sc;
 	private static SocketServer ss;
 	private static int portNumber = 9990;
-
 
 	private JTextField clientPort;
 
@@ -111,6 +101,7 @@ public class GUI {
 					sc = new SocketClient(strings.get(0), Integer
 							.valueOf(strings.get(1)));
 					sc.connect();
+					sc.readResponse();
 				} catch (UnknownHostException e) {
 					SocketClient
 							.displayText("Host unknown. Cannot establish connection");
@@ -154,7 +145,7 @@ public class GUI {
 
 		progressBar = new JProgressBar();
 		serverConnectionPanel.add(progressBar);
-		
+
 		JButton hostServer = new JButton("Host Server");
 		hostServer.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
@@ -177,28 +168,38 @@ public class GUI {
 				ss.close();
 			}
 		});
-		serverConnectionPanel.add(endServer);
+		serverPanel.add(endServer);
+	}
 
-		// Server message panel
-		JPanel serverMsgPanel = new JPanel();
-		serverPanel.add(serverMsgPanel, BorderLayout.CENTER);
+	public void addDisplayPane(Container pane) {
+		JPanel displayPane = new JPanel();
+		displayPane.setLayout(new BorderLayout(0, 0));
 
-		// Server message text field
-		serverMessageField = new JTextField();
-		serverMsgPanel.add(serverMessageField);
-		serverMessageField.setColumns(10);
+		JPanel panel = new JPanel();
+		displayPane.add(panel, BorderLayout.NORTH);
 
-		// Server button to send message
-		JButton serverSendMessage = new JButton("Send message");
-		serverMsgPanel.add(serverSendMessage);
-		
-		JPanel serverDisplay = new JPanel();
-		serverPanel.add(serverDisplay, BorderLayout.SOUTH);
-		serverDisplay.setLayout(new BorderLayout(0, 0));
+		clientMessageField = new JTextField();
+		panel.add(clientMessageField);
+		clientMessageField.setColumns(10);
 
-		// Server display
-		serverText = new TextArea("Hello Server.");
-		serverDisplay.add(serverText);
+		JButton btnSendMessage = new JButton("Send message");
+		panel.add(btnSendMessage);
+
+		btnSendMessage.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				try {
+
+				} catch (Exception e) {
+
+				}
+			}
+		});
+
+		pane.add(displayPane, BorderLayout.SOUTH);
+
+		clientText = new TextArea();
+		displayPane.add(clientText);
 	}
 
 	private static void createAndShowGUI() {
@@ -228,14 +229,14 @@ public class GUI {
 	public static JProgressBar getProgressBar() {
 		return progressBar;
 	}
-	
+
 	/**
 	 * Gets hosts name and port
 	 */
 	public static ArrayList<String> getHostParams() {
 		String s = getHostnameField().getText();
 		String[] strings = s.split(":");
-		return new ArrayList<>(Arrays.asList(strings[0], strings[1]));
+		return new ArrayList<String>(Arrays.asList(strings[0], strings[1]));
 	}
 
 }
