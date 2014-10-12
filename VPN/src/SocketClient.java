@@ -25,9 +25,10 @@ public class SocketClient {
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(
 				socketClient.getInputStream()));
 
-		System.out.println("Response from server:");
+		System.out.print("Response from server:");
 		while ((userInput = stdIn.readLine()) != null) {
 			System.out.println(userInput);
+            GUI.displayClientText(userInput);
 		}
 	}
 

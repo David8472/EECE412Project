@@ -1,10 +1,5 @@
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.Socket;
-import java.util.Date;
 
 public class SocketClientHandler implements Runnable {
 
@@ -20,7 +15,6 @@ public class SocketClientHandler implements Runnable {
 
 		try {
 			readResponse();
-            client.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
@@ -33,22 +27,17 @@ public class SocketClientHandler implements Runnable {
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(
 				client.getInputStream()));
 		while ((userInput = stdIn.readLine()) != null) {
-			if (userInput.equals("TIME?")) {
-				System.out
-						.println("REQUEST TO SEND TIME RECEIVED. SENDING CURRENT TIME");
-				sendTime();
-				break;
-			}
-			System.out.println(userInput);
-		}
-	}
+            System.out
+                    .println("CLIENT REQUESTED RESPONSE");
 
-	private void sendTime() throws IOException, InterruptedException {
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-                client.getOutputStream()));
-        writer.write(new Date().toString());
-        writer.flush();
-        writer.close();
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+                    client.getOutputStream()));
+            writer.write(userInput);
+            writer.flush();
+            writer.close();
+
+            break;
+		}
 	}
 
 }

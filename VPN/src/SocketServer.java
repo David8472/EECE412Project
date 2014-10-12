@@ -39,7 +39,7 @@ public class SocketServer {
 						GUI.getProgressBar().setValue(100);
 						Toolkit.getDefaultToolkit().beep();
 						clientProcessingPool
-								.submit(new ClientTask(clientSocket));
+								.submit(new SocketClientHandler(clientSocket));
 						System.out
 								.println("The following client has connected:"
 										+ clientSocket.getInetAddress()
@@ -62,43 +62,6 @@ public class SocketServer {
 		serverSocket.close();
 		GUI.getProgressBar().setIndeterminate(false);
 	}
-
-	private class ClientTask implements Runnable {
-		private final Socket clientSocket;
-
-		private ClientTask(Socket clientSocket) {
-			this.clientSocket = clientSocket;
-		}
-
-		@Override
-		public void run() {
-			System.out.println("Got a client !");
-
-			// Do whatever required to process the client's request
-
-			try {
-                String userInput;
-                BufferedReader stdIn = new BufferedReader(new InputStreamReader(
-                        clientSocket.getInputStream()));
-                while ((userInput = stdIn.readLine()) != null) {
-                        System.out
-                                .println("CLIENT REQUESTED RESPONSE");
-
-                        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-                                clientSocket.getOutputStream()));
-                        writer.write(userInput);
-                        writer.flush();
-                        writer.close();
-
-                        break;
-                }
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-			// Do whatever required to process the client's request
 
 	/**
 	 * Creates a SocketServer object and starts the server.
