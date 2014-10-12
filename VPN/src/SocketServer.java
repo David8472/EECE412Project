@@ -1,4 +1,7 @@
-import java.io.*;
+import java.awt.Toolkit;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -19,7 +22,6 @@ public class SocketServer {
 	}
 
 	public void start() throws IOException {
-		System.out.println("Starting the socket server at port:" + port);
 		serverSocket = new ServerSocket(port);
 
 		final ExecutorService clientProcessingPool = Executors
@@ -28,30 +30,33 @@ public class SocketServer {
 		Runnable serverTask = new Runnable() {
 			@Override
 			public void run() {
-				System.out.println("Waiting for clients...");
+				GUI.displayServerText("Waiting for clients...");
 				try {
 					while (true) {
 						Socket clientSocket = serverSocket.accept();
+						GUI.getProgressBar().setIndeterminate(false);
+						GUI.getProgressBar().setValue(100);
+						Toolkit.getDefaultToolkit().beep();
 						clientProcessingPool
 								.submit(new ClientTask(clientSocket));
-						System.out
-								.println("The following client has connected:"
-										+ clientSocket.getInetAddress()
-												.getCanonicalHostName());
+						// DataInputStream din = new DataInputStream(
+						// clientSocket.getInputStream());
+						// String message = din.readUTF();
+						// System.out.println(message);
+						// Thread thread = new Thread(new
+						// SocketClientHandler(clientSocket));
+						// thread.start();
 
-//                        DataInputStream din = new DataInputStream( clientSocket.getInputStream());
-//                        String message = din.readUTF();
-//                        System.out.println(message);
-//                        Thread thread = new Thread(new SocketClientHandler(clientSocket));
-//                        thread.start();
-
-//                        SocketClientHandler handler = new SocketClientHandler(clientSocket);
-//                        clientProcessingPool.submit(new ClientHandlerTask(handler));
+						// SocketClientHandler handler = new
+						// SocketClientHandler(clientSocket);
+						// clientProcessingPool.submit(new
+						// ClientHandlerTask(handler));
+						GUI.displayServerText("The following client has connected:"
+								+ clientSocket.getInetAddress()
+										.getCanonicalHostName());
 					}
 				} catch (IOException e) {
-					System.err
-							.println("Unable to process client request. Socket closed");
-					// e.printStackTrace();
+					GUI.displayServerText("*Unable to process client request. Socket closed*");
 				}
 			}
 		};
@@ -61,35 +66,32 @@ public class SocketServer {
 		serverThread.start();
 	}
 
-	public void close() {
-		try {
-			serverSocket.close();
-		} catch (IOException e) {
-			System.err.println("Port has not been opened");
-		}
+	public void close() throws IOException, NullPointerException {
+		serverSocket.close();
+		GUI.getProgressBar().setIndeterminate(false);
 	}
 
-    private class ClientTask implements Runnable {
-        private final Socket clientSocket;
+	private class ClientTask implements Runnable {
+		private final Socket clientSocket;
 
-        private ClientTask(Socket clientSocket) {
-            this.clientSocket = clientSocket;
-        }
+		private ClientTask(Socket clientSocket) {
+			this.clientSocket = clientSocket;
+		}
 
-        @Override
-        public void run() {
-            System.out.println("Got a client !");
+		@Override
+		public void run() {
+			System.out.println("Got a client !");
 
-            // Do whatever required to process the client's request
+			// Do whatever required to process the client's request
 
-            try {
-                sendWelcomeMessage(clientSocket);
-                clientSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+			try {
+				sendWelcomeMessage(clientSocket);
+				clientSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
 	private class ClientHandlerTask implements Runnable {
 		private final SocketClientHandler handler;
@@ -101,6 +103,7 @@ public class SocketServer {
 		@Override
 		public void run() {
 			System.out.println("Handler");
+			GUI.displayServerText("Got a client !");
 
 			// Do whatever required to process the client's request
 
@@ -120,13 +123,13 @@ public class SocketServer {
 		writer.close();
 	}
 
-//    private void readMessage(Socket client) throws IOException {
-//        BufferedReader reader = new BufferedReader(new InputStreamReader(
-//                client.getInputStream()));
-//
-//        String in = reader.readLine();
-//        System.out.println("!!!" + in);
-//    }
+	// private void readMessage(Socket client) throws IOException {
+	// BufferedReader reader = new BufferedReader(new InputStreamReader(
+	// client.getInputStream()));
+	//
+	// String in = reader.readLine();
+	// System.out.println("!!!" + in);
+	// }
 
 	/**
 	 * Creates a SocketServer object and starts the server.
@@ -141,7 +144,6 @@ public class SocketServer {
 			// initializing the Socket Server
 			SocketServer socketServer = new SocketServer(portNumber);
 			socketServer.start();
-
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
