@@ -105,11 +105,7 @@ public class GUI {
 					String hostName = hostnameField.getText();
 					int hostPort = Integer.valueOf(clientPort.getText());
 					sc = new SocketClient(hostName, hostPort);
-					sc.connect();
-
-                    sc.askForTime();
-                    sc.readResponse();
-
+                    sc.connect();
 				} catch (UnknownHostException e) {
 					displayClientText("*Host unknown. Cannot establish connection*");
 				} catch (IOException e) {
@@ -129,6 +125,25 @@ public class GUI {
 
 		// Client button to send message
 		JButton clientSendMessage = new JButton("Send message");
+        clientSendMessage.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                String message = clientMessageField.getText();
+
+                if (message == null || message.equals("")) {
+                    throw new NullPointerException("Error: please specify a message");
+                }
+
+                try {
+                    sc.sendMessage(message);
+                    sc.readResponse();
+                } catch(Exception e) {
+
+                }
+
+            }
+        });
+
 		clientMsgPanel.add(clientSendMessage);
 		JPanel clientDisplay = new JPanel();
 		clientPanel.add(clientDisplay, BorderLayout.SOUTH);

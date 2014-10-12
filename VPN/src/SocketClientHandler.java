@@ -45,10 +45,10 @@ public class SocketClientHandler implements Runnable {
 
 	private void sendTime() throws IOException, InterruptedException {
 		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-				client.getOutputStream()));
-		writer.write(new Date().toString());
-		writer.flush();
-		writer.close();
+                client.getOutputStream()));
+        writer.write(new Date().toString());
+        writer.flush();
+        writer.close();
 	}
 
 }
