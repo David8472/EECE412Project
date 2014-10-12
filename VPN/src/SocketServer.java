@@ -44,8 +44,9 @@ public class SocketServer {
 //                        System.out.println(message);
 //                        Thread thread = new Thread(new SocketClientHandler(clientSocket));
 //                        thread.start();
-                        SocketClientHandler handler = new SocketClientHandler(clientSocket);
-                        clientProcessingPool.submit(new ClientHandlerTask(handler));
+
+//                        SocketClientHandler handler = new SocketClientHandler(clientSocket);
+//                        clientProcessingPool.submit(new ClientHandlerTask(handler));
 					}
 				} catch (IOException e) {
 					System.err
@@ -82,6 +83,7 @@ public class SocketServer {
             // Do whatever required to process the client's request
 
             try {
+                sendWelcomeMessage(clientSocket);
                 clientSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();
