@@ -38,6 +38,14 @@ public class SocketServer {
 								.println("The following client has connected:"
 										+ clientSocket.getInetAddress()
 												.getCanonicalHostName());
+
+//                        DataInputStream din = new DataInputStream( clientSocket.getInputStream());
+//                        String message = din.readUTF();
+//                        System.out.println(message);
+//                        Thread thread = new Thread(new SocketClientHandler(clientSocket));
+//                        thread.start();
+                        SocketClientHandler handler = new SocketClientHandler(clientSocket);
+                        clientProcessingPool.submit(new ClientHandlerTask(handler));
 					}
 				} catch (IOException e) {
 					System.err
@@ -46,6 +54,7 @@ public class SocketServer {
 				}
 			}
 		};
+
 		// A client has connected to this server. Send welcome message
 		Thread serverThread = new Thread(serverTask);
 		serverThread.start();
@@ -59,25 +68,43 @@ public class SocketServer {
 		}
 	}
 
-	private class ClientTask implements Runnable {
-		private final Socket clientSocket;
+    private class ClientTask implements Runnable {
+        private final Socket clientSocket;
 
-		private ClientTask(Socket clientSocket) {
-			this.clientSocket = clientSocket;
+        private ClientTask(Socket clientSocket) {
+            this.clientSocket = clientSocket;
+        }
+
+        @Override
+        public void run() {
+            System.out.println("Got a client !");
+
+            // Do whatever required to process the client's request
+
+            try {
+                clientSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+	private class ClientHandlerTask implements Runnable {
+		private final SocketClientHandler handler;
+
+		private ClientHandlerTask(SocketClientHandler handler) {
+			this.handler = handler;
 		}
 
 		@Override
 		public void run() {
-			System.out.println("Got a client !");
+			System.out.println("Handler");
 
 			// Do whatever required to process the client's request
 
 			try {
-                clientSocket.setKeepAlive(true);
-                sendWelcomeMessage(clientSocket);
-//                readMessage(clientSocket);
-//				clientSocket.close();
-			} catch (IOException e) {
+				handler.readResponse();
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
@@ -91,13 +118,13 @@ public class SocketServer {
 		writer.close();
 	}
 
-    private void readMessage(Socket client) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(
-                client.getInputStream()));
-
-        String in = reader.readLine();
-        System.out.print(in);
-    }
+//    private void readMessage(Socket client) throws IOException {
+//        BufferedReader reader = new BufferedReader(new InputStreamReader(
+//                client.getInputStream()));
+//
+//        String in = reader.readLine();
+//        System.out.println("!!!" + in);
+//    }
 
 	/**
 	 * Creates a SocketServer object and starts the server.

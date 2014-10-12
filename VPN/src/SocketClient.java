@@ -40,6 +40,13 @@ public class SocketClient {
         writer.close();
     }
 
+    public void askForTime() throws IOException{
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socketClient.getOutputStream()));
+        writer.write("TIME?");
+        writer.newLine();
+        writer.flush();
+    }
+
 	public void displayText(String s) {
 		GUI.getTextArea().append("\n" + s);
 	}
@@ -50,7 +57,9 @@ public class SocketClient {
 		try {
 			// trying to establish connection to the server
 			client.connect();
-            client.sendClientMessage();
+
+            client.askForTime();
+//            client.sendClientMessage();
 			// if successful, read response from server
 			client.readResponse();
 

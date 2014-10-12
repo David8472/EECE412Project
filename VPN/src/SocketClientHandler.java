@@ -27,7 +27,7 @@ public class SocketClientHandler implements Runnable {
 		}
 	}
 
-	private void readResponse() throws IOException, InterruptedException {
+	public void readResponse() throws IOException, InterruptedException {
 		String userInput;
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(
 				client.getInputStream()));
