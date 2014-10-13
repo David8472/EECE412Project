@@ -31,7 +31,7 @@ public class GUI {
 	private static SocketClient sc;
 	private static SocketServer ss;
 
-	// private static int portNumber = 9990;
+    private JLabel sharedSecretValLabel = new JLabel("Shared Secret Value: ");
 
 	/**
 	 * Launch the application.
@@ -85,7 +85,6 @@ public class GUI {
 		// Host field
 		hostnameField = new JTextField();
 		clientConnectionPanel.add(hostnameField);
-		// hostnameField.setText("Please enter host address.");
 		hostnameField.setText("localhost");
 		hostnameField.setColumns(10);
 
@@ -113,6 +112,15 @@ public class GUI {
 				}
 			}
 		});
+        // shared secret value field
+        JTextField secretValueField = new JTextField();
+        secretValueField.setColumns(20);
+
+        clientConnectionPanel.add(sharedSecretValLabel);
+        clientConnectionPanel.add(secretValueField);
+
+        JButton secretValBtn = new JButton("Set secret value");
+        clientConnectionPanel.add(secretValBtn);
 
 		// Client message panel
 		JPanel clientMsgPanel = new JPanel();
@@ -179,6 +187,7 @@ public class GUI {
 					progressBar.setIndeterminate(true);
 				} catch (IOException e) {
                     displayServerText("Unable to read.");
+                    e.printStackTrace();
                 }
                     catch (NumberFormatException e) {
 					displayServerText("*Invalid port number*");
@@ -217,7 +226,7 @@ public class GUI {
 
 		progressBar = new JProgressBar();
 
-		// SidePane to show txtfield and progress
+		// SidePane to show textfield and progress
 		JPanel serverSidePane = new JPanel();
 		serverSidePane
 				.setLayout(new BoxLayout(serverSidePane, BoxLayout.Y_AXIS));
@@ -228,6 +237,7 @@ public class GUI {
 		splitPane.setLeftComponent(buttonPane);
 		splitPane.setRightComponent(serverSidePane);
 		serverConnectionPanel.add(splitPane);
+
 
 		// Server message panel
 		JPanel serverMsgPanel = new JPanel();
@@ -242,6 +252,16 @@ public class GUI {
 		JButton serverSendMessage = new JButton("Send message");
 		serverMsgPanel.add(serverSendMessage);
 
+        // shared secret value field
+        JTextField secretValueField = new JTextField();
+        secretValueField.setColumns(20);
+
+        serverMsgPanel.add(sharedSecretValLabel);
+        serverMsgPanel.add(secretValueField);
+
+        JButton secretValBtn = new JButton("Set secret value");
+        serverMsgPanel.add(secretValBtn);
+
 		JPanel serverDisplay = new JPanel();
 		serverPanel.add(serverDisplay, BorderLayout.SOUTH);
 		serverDisplay.setLayout(new BorderLayout(0, 0));
@@ -250,6 +270,11 @@ public class GUI {
 		serverText = new TextArea("Hello Server.");
 		serverDisplay.add(serverText);
 	}
+
+    private void addSecretValueField(JPanel panel) {
+        JTextField sharedValue = new JTextField();
+        panel.add(sharedValue);
+    }
 
 	private static void createAndShowGUI() {
 		// Create and set up the window.
