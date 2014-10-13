@@ -18,6 +18,21 @@ public class SocketClient {
 				+ port);
 		socketClient = new Socket(hostname, port);
 		GUI.displayClientText("Connection Established");
+
+        Runnable clientTask = new Runnable() {
+            @Override
+            public void run() {
+                try {
+
+                   readResponse();
+                } catch (IOException e) {
+
+                }
+            }
+        };
+
+        Thread serverThread = new Thread(clientTask);
+        serverThread.start();
 	}
 
 	public void readResponse() throws IOException {
@@ -25,7 +40,6 @@ public class SocketClient {
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(
 				socketClient.getInputStream()));
 
-		System.out.print("Response from server:");
 		while ((userInput = stdIn.readLine()) != null) {
 			System.out.println(userInput);
             GUI.displayClientText(userInput);
@@ -34,7 +48,7 @@ public class SocketClient {
 
     public void sendMessage(String message) throws IOException{
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socketClient.getOutputStream()));
-        writer.write(message);
+        writer.write(message + "\n");
         writer.newLine();
         writer.flush();
     }

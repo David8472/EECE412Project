@@ -15,6 +15,7 @@ public class SocketClientHandler implements Runnable {
 
 		try {
 			readResponse();
+//            client.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
@@ -26,18 +27,17 @@ public class SocketClientHandler implements Runnable {
 		String userInput;
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(
 				client.getInputStream()));
-		while ((userInput = stdIn.readLine()) != null) {
-            System.out
-                    .println("CLIENT REQUESTED RESPONSE");
+        while ((userInput = stdIn.readLine()) != null) {
+            if (!userInput.equals("") && userInput != null) {
+                GUI.displayServerText(userInput);
+                System.out.println(userInput);
 
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-                    client.getOutputStream()));
-            writer.write(userInput);
-            writer.flush();
-            writer.close();
-
-            break;
-		}
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+                        client.getOutputStream()));
+                writer.write("server says: " + userInput + "\n");
+                writer.flush();
+            }
+        }
 	}
 
 }

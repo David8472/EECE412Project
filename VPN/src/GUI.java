@@ -121,7 +121,7 @@ public class GUI {
 		// Client message text field
 		clientMessageField = new JTextField();
 		clientMsgPanel.add(clientMessageField);
-		clientMessageField.setColumns(10);
+		clientMessageField.setColumns(50);
 
 		// Client button to send message
 		JButton clientSendMessage = new JButton("Send message");
@@ -136,9 +136,9 @@ public class GUI {
 
                 try {
                     sc.sendMessage(message);
-                    sc.readResponse();
-                } catch(Exception e) {
-
+                } catch(IOException e) {
+                    GUI.displayClientText("Sorry, we were unable to send that message!");
+                    e.printStackTrace();
                 }
 
             }
