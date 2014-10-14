@@ -11,25 +11,50 @@ public class VPN {
 	private static int modulus;
 	private static int privateKey;
 	private static String message;
+	private static int signature_length;
+	private static byte[] hashed_bytes;
 	private static char[] encryptedMessage;
 	private static char[] decryptedMessage;
 	
 	public static void main(String[] args) throws NoSuchAlgorithmException, UnsupportedEncodingException{
-		MessageDigest md = MessageDigest.getInstance("MD5");
-		
+
 		//generate private and public key
 		generateKeys();
 	
 		//Adversary's private key
 		//privateKey = 25015;
-		
+		message = "test";
 		//Alice sends a message to Bob
 		encryptedMessage = encrypt(message);
 
 		//Alice produces a hash value of her message
 				
-		md.update(message.getBytes("UTF-8"));
-		byte[] hashed_bytes = md.digest(message.getBytes());
+		char[] toSend = sign_signature(message, encryptedMessage);
+		boolean verified = verify_signature(toSend, encryptedMessage, signature_length);
+		
+		if(verified){
+			System.out.println("receive message");
+			
+		}else{
+			System.out.println("ignore message");
+		}
+		
+		
+		
+	}
+	
+	public static char[] sign_signature(String message, char[] encryptedMessage){
+		try{
+			MessageDigest md = MessageDigest.getInstance("MD5");
+			md.update(message.getBytes("UTF-8"));
+			
+			//Alice produces a hash value of her message
+			hashed_bytes = md.digest(message.getBytes());
+		}catch(Exception e){
+			
+		}
+		
+		
 		char[] hashed_msg = new char[hashed_bytes.length];
 		for(int i = 0; i < hashed_bytes.length; i++){
 			hashed_msg[i] = (char)(hashed_bytes[i] & 0xff);
@@ -37,14 +62,22 @@ public class VPN {
 		
 		//Alice "decrypts" this hashed message using her private key
 		char[] signature = decrypt(hashed_msg);
+		signature_length = signature.length;
 		//Alice attaches it to her message
 		char[] msgToSend = new char[encryptedMessage.length + signature.length];
 		System.arraycopy(encryptedMessage, 0, msgToSend, 0, encryptedMessage.length);
 		System.arraycopy(signature, 0, msgToSend, encryptedMessage.length, signature.length);
+		
+		return msgToSend;
+	}
+	
+	public static boolean verify_signature(char[] msgToSend, char[] encryptedMessage, int sig_length) {
+		
 
+		
 		//Bob receives it and "encrypts" the signature using Alice's public key
-		char[] rcv_signature = new char[signature.length];
-		System.arraycopy(msgToSend, encryptedMessage.length, rcv_signature, 0, signature.length);
+		char[] rcv_signature = new char[sig_length];
+		System.arraycopy(msgToSend, encryptedMessage.length, rcv_signature, 0, sig_length);
 
 		rcv_signature = encrypt(new String(rcv_signature));
 		
@@ -52,30 +85,29 @@ public class VPN {
 		for(int i = 0; i < rcv_signature.length; i++){
 			rcv_sig_in_bytes[i] = (byte)(0xff & rcv_signature[i]);
 		}
-		
-		md.update(rcv_sig_in_bytes);
-		byte[] hashToCompare = md.digest(rcv_sig_in_bytes);
+		try{
+			MessageDigest md = MessageDigest.getInstance("MD5");
+			md.update(rcv_sig_in_bytes);
+			byte[] hashToCompare = md.digest(rcv_sig_in_bytes);
+		}catch(Exception e){
+			
+		}
 		
 		char[] rehashed_msg = new char[rcv_sig_in_bytes.length];
 		for(int i = 0; i < rcv_sig_in_bytes.length; i++){
 			rehashed_msg[i] = (char)(rcv_sig_in_bytes[i] & 0xff);
 		}
 		
-		
 		if(Arrays.equals(rcv_sig_in_bytes, hashed_bytes)){
-			System.out.println("sender verified");
-			decryptedMessage = decrypt(encryptedMessage);
-			System.out.println(new String(decryptedMessage));
+			return true;
 		}
 		else{
-			System.out.println("sender not verified");
+			return false;
 
 		}
 		
-		
+	
 	}
-	
-	
 	
 	
 	public static void generateKeys(){
@@ -191,6 +223,14 @@ public class VPN {
 
 
 
+
+	public static int getPrivateKey() {
+		return privateKey;
+	}
+
+	public static void setPrivateKey(int privateKey) {
+		VPN.privateKey = privateKey;
+	}
 
 	public static void setDecryptedMessage(char[] decryptedMessage) {
 		VPN.decryptedMessage = decryptedMessage;

@@ -1,5 +1,7 @@
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.EventQueue;
+import java.awt.TextArea;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -8,6 +10,17 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
+
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+
 import vpn.VPN;
 
 public class GUI {
@@ -119,13 +132,21 @@ public class GUI {
 			}
 		});
         // shared secret value field
-        JTextField secretValueField = new JTextField();
+        final JTextField secretValueField = new JTextField();
         secretValueField.setColumns(20);
 
         clientConnectionPanel.add(sharedSecretValLabel);
         clientConnectionPanel.add(secretValueField);
 
         JButton secretValBtn = new JButton("Set secret value");
+        secretValBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                String key_val = secretValueField.getText();
+                int key = Integer.parseInt(key_val);
+                vpn.setPrivateKey(key);
+            }
+        });
         clientConnectionPanel.add(secretValBtn);
 
 		// Client message panel
@@ -151,12 +172,14 @@ public class GUI {
                 }
                 
                 //encrypting the message
-                vpn.setMessage(message);
+    //            vpn.setMessage(message);
     //          vpn.setEncryptedMessage(vpn.encrypt(vpn.getMessage()));
    //             message = new String(vpn.getEncryptedMessage());
-               char[] toSend = vpn.encrypt(message);
-                message = new String(toSend);
-                
+               char[] encrypted_msg =vpn.encrypt(message);
+               message = new String(encrypted_msg);
+               char[] signed_msg = vpn.sign_signature(message, encrypted_msg);
+               message = new String(signed_msg);
+            		   
                 try {
                     sc.sendMessage(message);
                 } catch(IOException e) {
