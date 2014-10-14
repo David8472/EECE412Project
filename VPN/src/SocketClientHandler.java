@@ -1,10 +1,11 @@
 import java.io.*;
 import java.net.Socket;
+import vpn.VPN;
 
 public class SocketClientHandler implements Runnable {
 
 	private Socket client;
-
+	private static VPN vpn;
 	public SocketClientHandler(Socket client) {
 		this.client = client;
 	}
@@ -26,18 +27,29 @@ public class SocketClientHandler implements Runnable {
 	public void readResponse() throws IOException, InterruptedException {
 		String userInput;
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(
-				client.getInputStream()));
+				client.getInputStream(), "UTF-8"));
         while ((userInput = stdIn.readLine()) != null) {
+        	char[] toDecrypt = new char[userInput.length()];
             if (!userInput.equals("") && userInput != null) {
-                GUI.displayServerText(userInput);
-                System.out.println(userInput);
+            	System.out.println("Sending Message");
+            	for(int i = 0; i < userInput.length(); i++){
+            		toDecrypt[i] = userInput.charAt(i);
+            	}
+            	
+            	String decrypted_msg = new String(vpn.decrypt(toDecrypt));
+            	GUI.displayServerText(decrypted_msg);
 
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+                
+  /*              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
                         client.getOutputStream()));
-                writer.write("server says: " + userInput + "\n");
+                writer.write("client says: " + userInput + "\n");
                 writer.flush();
+     */
             }
+         
         }
+
+               
 	}
 
 }

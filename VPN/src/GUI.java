@@ -8,6 +8,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
+import vpn.VPN;
 
 public class GUI {
 
@@ -30,13 +31,18 @@ public class GUI {
 
 	private static SocketClient sc;
 	private static SocketServer ss;
+	
 
+	
+	private static VPN vpn;
+	
     private JLabel sharedSecretValLabel = new JLabel("Shared Secret Value: ");
 
 	/**
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
+		vpn.generateKeys();
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
@@ -137,11 +143,20 @@ public class GUI {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 String message = clientMessageField.getText();
+              
 
+                
                 if (message == null || message.equals("")) {
                     throw new NullPointerException("Error: please specify a message");
                 }
-
+                
+                //encrypting the message
+                vpn.setMessage(message);
+    //          vpn.setEncryptedMessage(vpn.encrypt(vpn.getMessage()));
+   //             message = new String(vpn.getEncryptedMessage());
+               char[] toSend = vpn.encrypt(message);
+                message = new String(toSend);
+                
                 try {
                     sc.sendMessage(message);
                 } catch(IOException e) {
