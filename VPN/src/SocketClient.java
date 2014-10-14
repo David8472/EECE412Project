@@ -47,7 +47,7 @@ public class SocketClient {
 	}
 
     public void sendMessage(String message) throws IOException{
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socketClient.getOutputStream()));
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socketClient.getOutputStream(), "UTF-8"));
         writer.write(message + "\n");
         writer.newLine();
         writer.flush();
