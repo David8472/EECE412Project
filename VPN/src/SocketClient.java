@@ -18,6 +18,21 @@ public class SocketClient {
 				+ port);
 		socketClient = new Socket(hostname, port);
 		GUI.displayClientText("Connection Established");
+
+        Runnable clientTask = new Runnable() {
+            @Override
+            public void run() {
+                try {
+
+                   readResponse();
+                } catch (IOException e) {
+
+                }
+            }
+        };
+
+        Thread serverThread = new Thread(clientTask);
+        serverThread.start();
 	}
 
 	public void readResponse() throws IOException {
@@ -25,27 +40,18 @@ public class SocketClient {
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(
 				socketClient.getInputStream()));
 
-		System.out.println("Response from server:");
 		while ((userInput = stdIn.readLine()) != null) {
 			System.out.println(userInput);
+            GUI.displayClientText(userInput);
 		}
 	}
 
-	public void sendClientMessage() throws IOException {
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-				socketClient.getOutputStream()));
-		writer.write("I'm the client message");
-		writer.flush();
-		writer.close();
-	}
-
-	public void askForTime() throws IOException {
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-				socketClient.getOutputStream()));
-		writer.write("TIME?");
-		writer.newLine();
-		writer.flush();
-	}
+    public void sendMessage(String message) throws IOException{
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socketClient.getOutputStream()));
+        writer.write(message + "\n");
+        writer.newLine();
+        writer.flush();
+    }
 
 	public static void main(String arg[]) {
 		// Creating a SocketClient object
@@ -54,8 +60,6 @@ public class SocketClient {
 			// trying to establish connection to the server
 			client.connect();
 
-			client.askForTime();
-			// client.sendClientMessage();
 			// if successful, read response from server
 			client.readResponse();
 		} catch (UnknownHostException e) {

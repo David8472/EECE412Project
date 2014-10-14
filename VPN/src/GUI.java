@@ -1,7 +1,5 @@
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.EventQueue;
-import java.awt.TextArea;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -10,15 +8,6 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
-
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
 
 public class GUI {
 
@@ -42,7 +31,7 @@ public class GUI {
 	private static SocketClient sc;
 	private static SocketServer ss;
 
-	// private static int portNumber = 9990;
+    private JLabel sharedSecretValLabel = new JLabel("Shared Secret Value: ");
 
 	/**
 	 * Launch the application.
@@ -96,7 +85,6 @@ public class GUI {
 		// Host field
 		hostnameField = new JTextField();
 		clientConnectionPanel.add(hostnameField);
-		// hostnameField.setText("Please enter host address.");
 		hostnameField.setText("localhost");
 		hostnameField.setColumns(10);
 
@@ -116,8 +104,7 @@ public class GUI {
 					String hostName = hostnameField.getText();
 					int hostPort = Integer.valueOf(clientPort.getText());
 					sc = new SocketClient(hostName, hostPort);
-					sc.connect();
-					sc.readResponse();
+                    sc.connect();
 				} catch (UnknownHostException e) {
 					displayClientText("*Host unknown. Cannot establish connection*");
 				} catch (IOException e) {
@@ -125,6 +112,15 @@ public class GUI {
 				}
 			}
 		});
+        // shared secret value field
+        JTextField secretValueField = new JTextField();
+        secretValueField.setColumns(20);
+
+        clientConnectionPanel.add(sharedSecretValLabel);
+        clientConnectionPanel.add(secretValueField);
+
+        JButton secretValBtn = new JButton("Set secret value");
+        clientConnectionPanel.add(secretValBtn);
 
 		// Client message panel
 		JPanel clientMsgPanel = new JPanel();
@@ -133,10 +129,29 @@ public class GUI {
 		// Client message text field
 		clientMessageField = new JTextField();
 		clientMsgPanel.add(clientMessageField);
-		clientMessageField.setColumns(10);
+		clientMessageField.setColumns(50);
 
 		// Client button to send message
 		JButton clientSendMessage = new JButton("Send message");
+        clientSendMessage.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                String message = clientMessageField.getText();
+
+                if (message == null || message.equals("")) {
+                    throw new NullPointerException("Error: please specify a message");
+                }
+
+                try {
+                    sc.sendMessage(message);
+                } catch(IOException e) {
+                    GUI.displayClientText("Sorry, we were unable to send that message!");
+                    e.printStackTrace();
+                }
+
+            }
+        });
+
 		clientMsgPanel.add(clientSendMessage);
 		JPanel clientDisplay = new JPanel();
 		clientPanel.add(clientDisplay, BorderLayout.SOUTH);
@@ -171,8 +186,10 @@ public class GUI {
 							+ portNumber);
 					progressBar.setIndeterminate(true);
 				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (NumberFormatException e) {
+                    displayServerText("Unable to read.");
+                    e.printStackTrace();
+                }
+                    catch (NumberFormatException e) {
 					displayServerText("*Invalid port number*");
 				} catch (IllegalArgumentException e) {
 					displayServerText("*Port number out of range*");
@@ -187,9 +204,11 @@ public class GUI {
 			public void actionPerformed(ActionEvent e) {
 				try {
 					ss.close();
-				} catch (NullPointerException | IOException e1) {
+				} catch (IOException e1) {
 					displayServerText("*Port has not been opened*");
-				}
+				} catch (NullPointerException e2) {
+                    e2.printStackTrace();
+                }
 			}
 		});
 		serverConnectionPanel.setLayout(new BorderLayout(0, 0));
@@ -207,7 +226,7 @@ public class GUI {
 
 		progressBar = new JProgressBar();
 
-		// SidePane to show txtfield and progress
+		// SidePane to show textfield and progress
 		JPanel serverSidePane = new JPanel();
 		serverSidePane
 				.setLayout(new BoxLayout(serverSidePane, BoxLayout.Y_AXIS));
@@ -218,6 +237,7 @@ public class GUI {
 		splitPane.setLeftComponent(buttonPane);
 		splitPane.setRightComponent(serverSidePane);
 		serverConnectionPanel.add(splitPane);
+
 
 		// Server message panel
 		JPanel serverMsgPanel = new JPanel();
@@ -232,6 +252,16 @@ public class GUI {
 		JButton serverSendMessage = new JButton("Send message");
 		serverMsgPanel.add(serverSendMessage);
 
+        // shared secret value field
+        JTextField secretValueField = new JTextField();
+        secretValueField.setColumns(20);
+
+        serverMsgPanel.add(sharedSecretValLabel);
+        serverMsgPanel.add(secretValueField);
+
+        JButton secretValBtn = new JButton("Set secret value");
+        serverMsgPanel.add(secretValBtn);
+
 		JPanel serverDisplay = new JPanel();
 		serverPanel.add(serverDisplay, BorderLayout.SOUTH);
 		serverDisplay.setLayout(new BorderLayout(0, 0));
@@ -240,6 +270,11 @@ public class GUI {
 		serverText = new TextArea("Hello Server.");
 		serverDisplay.add(serverText);
 	}
+
+    private void addSecretValueField(JPanel panel) {
+        JTextField sharedValue = new JTextField();
+        panel.add(sharedValue);
+    }
 
 	private static void createAndShowGUI() {
 		// Create and set up the window.
