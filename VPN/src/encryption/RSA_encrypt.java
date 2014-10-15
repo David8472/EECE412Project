@@ -1,12 +1,9 @@
 package encryption;
-import java.security.InvalidKeyException;
+import javax.crypto.Cipher;
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-
-import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
 
 
 public class RSA_encrypt {
