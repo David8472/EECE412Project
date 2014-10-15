@@ -71,6 +71,7 @@ public class RSA_encrypt {
 			  plaintext = c.doFinal(ciphertext);
 		  }catch(BadPaddingException ns){
 			  System.out.println("padding exception caught in decrypt");
+              ns.printStackTrace();
 		  
 		  }catch(Exception e){
 			  

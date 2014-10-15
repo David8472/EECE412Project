@@ -3,6 +3,7 @@ import encryption.RSA_encrypt;
 import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -63,10 +64,12 @@ public class SocketClient {
 				socketClient.getInputStream()));
 
 		while ((userInput = stdIn.readLine()) != null) {
-			System.out.println(userInput);
-//            String decryptedText = RSA_encrypt.decrypt(userInput.getBytes(), privateKey).toString();
-            GUI.displayClientText(userInput);
-		}
+            System.out.println(userInput);
+//            byte[] decryptedText = RSA_encrypt.decrypt(userInput.getBytes(Charset.forName("UTF-8")), privateKey);
+//            GUI.displayClientText(decryptedText);
+            byte[] buin = userInput.getBytes(Charset.forName("UTF-8"));
+            System.out.println(RSA_encrypt.decrypt(buin, privateKey));
+        }
 	}
 
     public void readPublicKey() throws IOException {
@@ -74,7 +77,7 @@ public class SocketClient {
             ObjectInputStream inFromServer = new ObjectInputStream(socketClient.getInputStream());
             serverPublicKey = (Key) inFromServer.readObject();
 
-            System.out.println("Client got " +  serverPublicKey.toString());
+            GUI.displayClientText("Received server public key " + serverPublicKey.toString());
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -93,9 +96,9 @@ public class SocketClient {
         System.out.println("client is sending");
         if (serverPublicKey != null) {
             try {
-                byte[] encryptedText = RSA_encrypt.encrypt(message, serverPublicKey);
+                byte[] encrypted = RSA_encrypt.encrypt(message, serverPublicKey);
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socketClient.getOutputStream(), "UTF-8"));
-                writer.write(encryptedText.toString());
+                writer.write(encrypted.toString());
                 writer.newLine();
                 writer.flush();
             } catch (IOException e) {

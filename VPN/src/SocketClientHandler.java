@@ -2,6 +2,7 @@ import encryption.RSA_encrypt;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.Charset;
 import java.security.Key;
 
 public class SocketClientHandler implements Runnable {
@@ -36,19 +37,23 @@ public class SocketClientHandler implements Runnable {
 
             while ((userInput = stdIn.readLine()) != null) {
                 System.out.println(userInput);
-                byte[] decrypted = RSA_encrypt.decrypt(userInput.getBytes(), privateKey);
+                byte[] decrypted = RSA_encrypt.decrypt(userInput.getBytes(Charset.forName("UTF-8")), privateKey);
                 GUI.displayServerText(decrypted.toString());
+
+                System.out.print("Decrypted client text: " + decrypted);
             }
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         }
 
-    public void sendMessage(byte[] message) throws IOException {
+    public void sendMessage(String message) throws IOException {
         try {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream(), "UTF-8"));
-            writer.write(message.toString());
+            writer.write(message);
             writer.newLine();
             writer.flush();
         } catch (IOException e) {
@@ -63,8 +68,7 @@ public class SocketClientHandler implements Runnable {
             ObjectInputStream inFromServer = new ObjectInputStream(client.getInputStream());
             publicKey = (Key) inFromServer.readObject();
 
-            System.out.println(publicKey.toString());
-            System.out.println("Client's public key is:  " + publicKey);
+            GUI.displayServerText("Received client public key:  " + publicKey);
 
             SocketServer.clientPublicKey = publicKey;
         } catch (ClassNotFoundException e) {

@@ -79,7 +79,7 @@ public class SocketServer {
     public void sendMessage(String message) {
         try {
             byte[] encryptedMsg = RSA_encrypt.encrypt(message, clientPublicKey);
-            handler.sendMessage(encryptedMsg);
+            handler.sendMessage(encryptedMsg.toString());
         } catch (IOException e) {
             e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
