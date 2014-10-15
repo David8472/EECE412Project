@@ -1,7 +1,8 @@
-import vpn.VPN;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.EventQueue;
+import java.awt.Point;
+import java.awt.TextArea;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -11,9 +12,27 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+
+import vpn.VPN;
+
 public class GUI {
 
-	private JFrame frame;
+	private static GUI applicationGUI;
+	private static JFrame frame;
+
+	private static JPanel ipPane;
+	private static JPanel confPane;
 
 	final static String CLIENTPANEL = "Client";
 	final static String SERVERPANEL = "Server";
@@ -32,14 +51,15 @@ public class GUI {
 
 	private static SocketClient sc;
 	private static SocketServer ss;
-	
 
-	
 	private static VPN vpn;
-	
-    private JLabel sharedSecretValLabel = new JLabel("Shared Secret Value: ");
 
-	/**
+	private JLabel clientSecretVal = new JLabel("Shared Secret Value: ");
+	private JLabel serverSecretVal = new JLabel("Shared Secret Value: ");
+
+	public static String[] options = { "Next Step" };
+
+	/*
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
@@ -62,6 +82,22 @@ public class GUI {
 		initialize();
 	}
 
+	private static void createAndShowGUI() {
+		// Create and set up the window.
+		JFrame frame = new JFrame("VPN");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		// Create and set up the content pane.
+		applicationGUI = new GUI();
+		applicationGUI.addClientServerPane(frame.getContentPane());
+
+		// Display the window.
+		frame.pack();
+		frame.setLocationRelativeTo(null);
+		frame.setVisible(true);
+		frame.setResizable(false);
+	}
+
 	/**
 	 * Initialize the contents of the frame.
 	 */
@@ -72,14 +108,25 @@ public class GUI {
 		frame.getContentPane().setLayout(new BorderLayout());
 	}
 
+	/**
+	 * Add client, server and ip paone to main panel
+	 * 
+	 * @param pane
+	 */
 	public void addClientServerPane(Container pane) {
 		JTabbedPane tabbedPane = new JTabbedPane();
-		addClientPane(tabbedPane);
 		addServerPane(tabbedPane);
+		addClientPane(tabbedPane);
 		pane.add(tabbedPane, BorderLayout.CENTER);
 		addIpPane(pane);
 	}
 
+	/**
+	 * Creates all the components used on the client side and uses parent as the
+	 * component it resides in
+	 * 
+	 * @param parent
+	 */
 	private void addClientPane(JTabbedPane parent) {
 		// Create base panel
 		JPanel clientPanel = new JPanel();
@@ -111,9 +158,9 @@ public class GUI {
 					String hostName = hostnameField.getText();
 					int hostPort = Integer.valueOf(clientPort.getText());
 					sc = new SocketClient(hostName, hostPort);
-                    sc.connect();
-                    sc.sendPublicKey();
-                    ss.sendPublicKey();
+					sc.connect();
+					sc.sendPublicKey();
+					ss.sendPublicKey();
 				} catch (UnknownHostException e) {
 					displayClientText("*Host unknown. Cannot establish connection*");
 				} catch (IOException e) {
@@ -121,23 +168,23 @@ public class GUI {
 				}
 			}
 		});
-        // shared secret value field
-        final JTextField secretValueField = new JTextField();
-        secretValueField.setColumns(20);
+		// shared secret value field
+		final JTextField secretValueField = new JTextField();
+		secretValueField.setColumns(20);
 
-        clientConnectionPanel.add(sharedSecretValLabel);
-        clientConnectionPanel.add(secretValueField);
+		clientConnectionPanel.add(clientSecretVal);
+		clientConnectionPanel.add(secretValueField);
 
-        JButton secretValBtn = new JButton("Set secret value");
-        secretValBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                String key_val = secretValueField.getText();
-                int key = Integer.parseInt(key_val);
-                vpn.setPrivateKey(key);
-            }
-        });
-        clientConnectionPanel.add(secretValBtn);
+		JButton secretValBtn = new JButton("Set secret value");
+		secretValBtn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				String key_val = secretValueField.getText();
+				int key = Integer.parseInt(key_val);
+				vpn.setPrivateKey(key);
+			}
+		});
+		clientConnectionPanel.add(secretValBtn);
 
 		// Client message panel
 		JPanel clientMsgPanel = new JPanel();
@@ -150,35 +197,35 @@ public class GUI {
 
 		// Client button to send message
 		JButton clientSendMessage = new JButton("Send message");
-        clientSendMessage.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                String message = clientMessageField.getText();
-              
+		clientSendMessage.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent actionEvent) {
+				final String message = clientMessageField.getText();
 
-                
-                if (message == null || message.equals("")) {
-                    throw new NullPointerException("Error: please specify a message");
-                }
-                
-//                //encrypting the message
-//    //            vpn.setMessage(message);
-//    //          vpn.setEncryptedMessage(vpn.encrypt(vpn.getMessage()));
-//   //             message = new String(vpn.getEncryptedMessage());
-//               char[] encrypted_msg =vpn.encrypt(message);
-//               message = new String(encrypted_msg);
-//               char[] signed_msg = vpn.sign_signature(message, encrypted_msg);
-//               message = new String(signed_msg);
-            		   
-                try {
-                    sc.sendMessage(message);
-                } catch(IOException e) {
-                    GUI.displayClientText("Sorry, we were unable to send that message!");
-                    e.printStackTrace();
-                }
+				if (message == null || message.equals("")) {
+					throw new NullPointerException(
+							"Error: please specify a message");
+				}
 
-            }
-        });
+				// //encrypting the message
+				// // vpn.setMessage(message);
+				// // vpn.setEncryptedMessage(vpn.encrypt(vpn.getMessage()));
+				// // message = new String(vpn.getEncryptedMessage());
+				// char[] encrypted_msg =vpn.encrypt(message);
+				// message = new String(encrypted_msg);
+				// char[] signed_msg = vpn.sign_signature(message,
+				// encrypted_msg);
+				// message = new String(signed_msg);
+
+				try {
+					sc.sendMessage(message);
+				} catch (IOException e) {
+					GUI.displayClientText("Sorry, we were unable to send that message!");
+					e.printStackTrace();
+				}
+
+			}
+		});
 
 		clientMsgPanel.add(clientSendMessage);
 		JPanel clientDisplay = new JPanel();
@@ -192,6 +239,12 @@ public class GUI {
 		parent.addTab(CLIENTPANEL, clientPanel);
 	}
 
+	/**
+	 * Creates all the components used on the server side and uses parent as the
+	 * component it resides in
+	 * 
+	 * @param parent
+	 */
 	private void addServerPane(JTabbedPane parent) {
 		JPanel serverPanel = new JPanel();
 		parent.addTab(SERVERPANEL, serverPanel);
@@ -214,10 +267,9 @@ public class GUI {
 							+ portNumber);
 					progressBar.setIndeterminate(true);
 				} catch (IOException e) {
-                    displayServerText("Unable to read.");
-                    e.printStackTrace();
-                }
-                    catch (NumberFormatException e) {
+					displayServerText("Unable to read.");
+					e.printStackTrace();
+				} catch (NumberFormatException e) {
 					displayServerText("*Invalid port number*");
 				} catch (IllegalArgumentException e) {
 					displayServerText("*Port number out of range*");
@@ -235,8 +287,8 @@ public class GUI {
 				} catch (IOException e1) {
 					displayServerText("*Port has not been opened*");
 				} catch (NullPointerException e2) {
-                    e2.printStackTrace();
-                }
+					e2.printStackTrace();
+				}
 			}
 		});
 		serverConnectionPanel.setLayout(new BorderLayout(0, 0));
@@ -266,7 +318,6 @@ public class GUI {
 		splitPane.setRightComponent(serverSidePane);
 		serverConnectionPanel.add(splitPane);
 
-
 		// Server message panel
 		JPanel serverMsgPanel = new JPanel();
 		serverPanel.add(serverMsgPanel, BorderLayout.CENTER);
@@ -278,24 +329,24 @@ public class GUI {
 
 		// Server button to send message
 		JButton serverSendMessage = new JButton("Send message");
-        serverSendMessage.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                ss.sendMessage(serverMessageField.getText());
-            }
-        });
+		serverSendMessage.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent actionEvent) {
+				ss.sendMessageToHandler(serverMessageField.getText());
+			}
+		});
 
 		serverMsgPanel.add(serverSendMessage);
 
-        // shared secret value field
-        JTextField secretValueField = new JTextField();
-        secretValueField.setColumns(20);
+		// shared secret value field
+		JTextField secretValueField = new JTextField();
+		secretValueField.setColumns(20);
 
-        serverMsgPanel.add(sharedSecretValLabel);
-        serverMsgPanel.add(secretValueField);
+		serverMsgPanel.add(serverSecretVal);
+		serverMsgPanel.add(secretValueField);
 
-        JButton secretValBtn = new JButton("Set secret value");
-        serverMsgPanel.add(secretValBtn);
+		JButton secretValBtn = new JButton("Set secret value");
+		serverMsgPanel.add(secretValBtn);
 
 		JPanel serverDisplay = new JPanel();
 		serverPanel.add(serverDisplay, BorderLayout.SOUTH);
@@ -306,27 +357,16 @@ public class GUI {
 		serverDisplay.add(serverText);
 	}
 
-    private void addSecretValueField(JPanel panel) {
-        JTextField sharedValue = new JTextField();
-        panel.add(sharedValue);
-    }
-
-	private static void createAndShowGUI() {
-		// Create and set up the window.
-		JFrame frame = new JFrame("VPN");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-		// Create and set up the content pane.
-		GUI applicationGUI = new GUI();
-		applicationGUI.addClientServerPane(frame.getContentPane());
-
-		// Display the window.
-		frame.pack();
-		frame.setLocationRelativeTo(null);
-		frame.setVisible(true);
-		frame.setResizable(false);
+	private void addSecretValueField(JPanel panel) {
+		JTextField sharedValue = new JTextField();
+		panel.add(sharedValue);
 	}
 
+	/**
+	 * Adds the ip pane to gui
+	 * 
+	 * @param pane
+	 */
 	private void addIpPane(Container pane) {
 		// Get ip button
 		JButton getIpButton = new JButton("Get IP");
@@ -336,12 +376,19 @@ public class GUI {
 				getIP();
 			}
 		});
-		JPanel ipPane = new JPanel();
+
+		ipPane = new JPanel();
+		ipPane.setLayout(new BoxLayout(ipPane, BoxLayout.Y_AXIS));
 		ipPane.add(getIpButton);
 		pane.add(ipPane, BorderLayout.NORTH);
+
+		confPane = new JPanel();
+		pane.add(confPane, BorderLayout.EAST);
 	}
 
-	// Retrieves list of ips and displays to text
+	/**
+	 * Retrieves list of ips and displays to text area of both client and server
+	 */
 	private void getIP() {
 		try {
 			Enumeration<NetworkInterface> e = NetworkInterface
@@ -364,18 +411,49 @@ public class GUI {
 		}
 	}
 
+	/**
+	 * Displays string s with the given window title
+	 * 
+	 * @param s
+	 * @param title
+	 */
+	public static void nextStep(String s, String title) {
+		JOptionPane.showOptionDialog(confPane, "", "", JOptionPane.NO_OPTION,
+				JOptionPane.NO_OPTION, null, options, options[0]);
+	}
+
+	/**
+	 * Display string s to client text area
+	 * 
+	 * @param s
+	 */
 	public static void displayClientText(String s) {
 		clientText.append("\n" + s);
 	}
 
+	/**
+	 * Display string s to server text area
+	 * 
+	 * @param s
+	 */
 	public static void displayServerText(String s) {
 		serverText.append("\n" + s);
 	}
 
+	/**
+	 * Returns server port
+	 * 
+	 * @return
+	 */
 	public static JTextField getServerPort() {
 		return serverPort;
 	}
 
+	/**
+	 * Returns progress bar
+	 * 
+	 * @return
+	 */
 	public static JProgressBar getProgressBar() {
 		return progressBar;
 	}

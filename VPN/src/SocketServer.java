@@ -13,102 +13,113 @@ import java.util.concurrent.Executors;
 
 public class SocketServer {
 
-    private ServerSocket serverSocket;
+	private ServerSocket serverSocket;
+	private SocketClientHandler handler;
 
-    private int port;
-    private SocketClientHandler handler;
-    private Key publicKey;
-    private Key privateKey;
+	private int port;
 
-    public static Key clientPublicKey;
+	private Key publicKey;
+	private Key privateKey;
 
-    public SocketServer(int port) {
-        this.port = port;
-        try {
-            KeyPairGenerator kg = KeyPairGenerator.getInstance("RSA");
-            KeyPair kp = kg.generateKeyPair();
-            this.publicKey = kp.getPublic();
-            this.privateKey = kp.getPrivate();
+	public static Key clientPublicKey;
 
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-    }
+	public SocketServer(int port) {
+		this.port = port;
+		try {
+			KeyPairGenerator kg = KeyPairGenerator.getInstance("RSA");
+			KeyPair kp = kg.generateKeyPair();
+			this.publicKey = kp.getPublic();
+			this.privateKey = kp.getPrivate();
 
-    public void start() throws IOException {
-        serverSocket = new ServerSocket(port);
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+	}
 
-        final ExecutorService clientProcessingPool = Executors.newFixedThreadPool(10);
+	/**
+	 * Opens socket and creates new thread to wait for client connection
+	 * 
+	 * @throws IOException
+	 */
+	public void start() throws IOException {
+		serverSocket = new ServerSocket(port);
 
-        Runnable serverTask = new Runnable() {
-            @Override
-            public void run() {
+		final ExecutorService clientProcessingPool = Executors
+				.newFixedThreadPool(10);
 
-                System.out.println("Waiting for clients...");
-                Socket client = null;
+		Runnable serverTask = new Runnable() {
+			@Override
+			public void run() {
 
-                try {
-                    while (true) {
-                        Socket clientSocket = serverSocket.accept();
-                        GUI.getProgressBar().setIndeterminate(false);
-                        GUI.getProgressBar().setValue(100);
-                        Toolkit.getDefaultToolkit().beep();
-                        handler = new SocketClientHandler(clientSocket, privateKey);
-                        clientProcessingPool.submit(handler);
-                        System.out.println("The following client has connected:"
-                                + clientSocket.getInetAddress().getCanonicalHostName());
+				System.out.println("Waiting for clients...");
+				Socket client = null;
 
-                    }
-                } catch (Exception e) {
-                    System.err.println("Unable to process client request. Socket closed");
-                }
-            }
-        };
+				try {
+					while (true) {
+						Socket clientSocket = serverSocket.accept();
+						GUI.getProgressBar().setIndeterminate(false);
+						GUI.getProgressBar().setValue(100);
+						GUI.getProgressBar()
+								.setString("Connection established");
+						Toolkit.getDefaultToolkit().beep();
+						handler = new SocketClientHandler(clientSocket,
+								privateKey);
+						clientProcessingPool.submit(handler);
+						System.out
+								.println("The following client has connected:"
+										+ clientSocket.getInetAddress()
+												.getCanonicalHostName());
 
-        // A client has connected to this server. Send welcome message
-        Thread serverThread = new Thread(serverTask);
-        serverThread.start();
-    }
+					}
+				} catch (Exception e) {
+					System.err
+							.println("Unable to process client request. Socket closed");
+				}
+			}
+		};
 
-    public void sendMessage(String message) {
-        try {
-            String encryptedMsg = RSA_encrypt.encrypt(message, clientPublicKey);
-            handler.sendMessage(encryptedMsg);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-    }
+		// Runs server on a seperate thread
+		Thread serverThread = new Thread(serverTask);
+		serverThread.start();
+	}
 
-    public void sendPublicKey() {
-        while (handler == null) {
-            System.out.print("Waiting for handler..");
-        }
+	/**
+	 * Encrypts for client handler
+	 * 
+	 * @param message
+	 */
+	public void sendMessageToHandler(String message) {
+		try {
+			String encryptedMsg = RSA_encrypt.encrypt(message, clientPublicKey);
+			GUI.nextStep(encryptedMsg, "Server Encrypted Message");
+			handler.sendMessage(encryptedMsg);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+	}
 
-        handler.sendPublicKey(publicKey);
-    }
+	/**
+	 * Sends the public key
+	 */
+	public void sendPublicKey() {
+		while (handler == null) {
+			System.out.print("Waiting for handler..");
+		}
 
-    public void close() throws IOException, NullPointerException {
-        serverSocket.close();
-        GUI.getProgressBar().setIndeterminate(false);
-    }
+		handler.sendPublicKey(publicKey);
+	}
 
-    /**
-     * Creates a SocketServer object and starts the server.
-     *
-     * @param args
-     */
-    public static void main(String[] args) {
-        // Setting a default port number.
-        int portNumber = 9990;
-
-        try {
-            // initializing the Socket Server
-            SocketServer socketServer = new SocketServer(portNumber);
-            socketServer.start();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+	/**
+	 * Close an open socket, otherwise exceptions are thrown
+	 * 
+	 * @throws IOException
+	 * @throws NullPointerException
+	 */
+	public void close() throws IOException, NullPointerException {
+		serverSocket.close();
+		GUI.getProgressBar().setIndeterminate(false);
+		GUI.getProgressBar().setString("No client connected.");
+	}
 }

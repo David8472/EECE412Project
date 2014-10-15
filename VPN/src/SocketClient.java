@@ -1,6 +1,10 @@
-import encryption.RSA_encrypt;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.Key;
@@ -8,119 +12,136 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 
+import encryption.RSA_encrypt;
+
 public class SocketClient {
 
-    private String hostname;
-    private int port;
-    Socket socketClient;
-    private Key publicKey;
-    private Key privateKey;
+	private Socket socketClient;
 
-    private Key serverPublicKey;
+	private String hostname;
+	private int port;
 
-    public SocketClient(String hostname, int port) {
-        this.hostname = hostname;
-        this.port = port;
+	private Key publicKey;
+	private Key privateKey;
 
-        try {
-            KeyPairGenerator kg = KeyPairGenerator.getInstance("RSA");
-            KeyPair kp = kg.generateKeyPair();
-            this.publicKey = kp.getPublic();
-            this.privateKey = kp.getPrivate();
+	private Key serverPublicKey;
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+	public SocketClient(String hostname, int port) {
+		this.hostname = hostname;
+		this.port = port;
 
-    public void connect() throws UnknownHostException, IOException {
-        GUI.displayClientText("Attempting to connect to " + hostname + ":" + port);
-        socketClient = new Socket(hostname, port);
-        GUI.displayClientText("Connection Established");
+		try {
+			KeyPairGenerator kg = KeyPairGenerator.getInstance("RSA");
+			KeyPair kp = kg.generateKeyPair();
+			this.publicKey = kp.getPublic();
+			this.privateKey = kp.getPrivate();
 
-        Runnable clientTask = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    readPublicKey();
-                    readResponse();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
+	/**
+	 * Connects to a server with specified host name and port
+	 * 
+	 * @throws UnknownHostException
+	 * @throws IOException
+	 */
+	public void connect() throws UnknownHostException, IOException {
+		GUI.displayClientText("Attempting to connect to " + hostname + ":"
+				+ port);
+		socketClient = new Socket(hostname, port);
+		GUI.displayClientText("Connection Established");
 
-        Thread serverThread = new Thread(clientTask);
-        serverThread.start();
-    }
+		Runnable clientTask = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					readPublicKey();
+					readResponse();
 
-    public void readResponse() throws IOException {
-        String userInput;
-        BufferedReader stdIn = new BufferedReader(new InputStreamReader(socketClient.getInputStream()));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		};
 
-        while ((userInput = stdIn.readLine()) != null) {
-            System.out.println(userInput);
-            String decryptedText = RSA_encrypt.decrypt(userInput, privateKey);
-            GUI.displayClientText(decryptedText);
-        }
-    }
+		Thread serverThread = new Thread(clientTask);
+		serverThread.start();
+	}
 
-    public void readPublicKey() throws IOException {
-        try {
-            ObjectInputStream inFromServer = new ObjectInputStream(socketClient.getInputStream());
-            serverPublicKey = (Key) inFromServer.readObject();
+	/**
+	 * Sends a message to server through a buffer
+	 * 
+	 * @param message
+	 * @throws IOException
+	 */
+	public void sendMessage(String message) throws IOException {
+		System.out.println("client is sending");
+		if (serverPublicKey != null) {
+			try {
+				String encryptedText = RSA_encrypt.encrypt(message,
+						serverPublicKey);
+				GUI.nextStep(encryptedText, "Encrypted Text");
+				BufferedWriter writer = new BufferedWriter(
+						new OutputStreamWriter(socketClient.getOutputStream()));
+				writer.write(encryptedText);
+				writer.newLine();
+				writer.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			}
 
-            System.out.println("Client got " + serverPublicKey.toString());
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
+		} else {
+			System.out.println("Server public key unknown.");
+		}
+	}
 
-    public void sendPublicKey() {
-        try {
-            ObjectOutputStream outToServer = new ObjectOutputStream(socketClient.getOutputStream());
-            outToServer.writeObject(publicKey);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+	/**
+	 * Read received messages from server
+	 * 
+	 * @throws IOException
+	 */
+	public void readResponse() throws IOException {
+		String userInput;
+		BufferedReader stdIn = new BufferedReader(new InputStreamReader(
+				socketClient.getInputStream()));
 
-    public void sendMessage(String message) throws IOException {
-        System.out.println("client is sending");
-        if (serverPublicKey != null) {
-            try {
-                String encryptedText = RSA_encrypt.encrypt(message, serverPublicKey);
-                System.out.println(" 64 encoded " + encryptedText);
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-                        socketClient.getOutputStream()));
-                writer.write(encryptedText);
-                writer.newLine();
-                writer.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            }
+		while ((userInput = stdIn.readLine()) != null) {
+			System.out.println(userInput);
+			String decryptedText = RSA_encrypt.decrypt(userInput, privateKey);
+			GUI.displayClientText(decryptedText);
+		}
+	}
 
-        } else {
-            System.out.println("Server public key unknown.");
-        }
-    }
+	/**
+	 * Reads the public key
+	 */
+	public void readPublicKey() throws IOException {
+		try {
+			ObjectInputStream inFromServer = new ObjectInputStream(
+					socketClient.getInputStream());
+			serverPublicKey = (Key) inFromServer.readObject();
 
-    public static void main(String arg[]) {
-        // Creating a SocketClient object
-        SocketClient client = new SocketClient("localhost", 9990);
-        try {
-            // trying to establish connection to the server
-            client.connect();
+			System.out.println("Client got " + serverPublicKey.toString());
+			GUI.nextStep(serverPublicKey.toString(), "Server public key");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
 
-            // if successful, read response from server
-            client.readResponse();
-        } catch (UnknownHostException e) {
-            GUI.displayClientText("Host unknown. Cannot establish connection");
-        } catch (IOException e) {
-            System.err.println("Cannot establish connection. Server may not be up." + e.getMessage());
-        }
-    }
+	/**
+	 * Sends the public key
+	 */
+	public void sendPublicKey() {
+		try {
+			ObjectOutputStream outToServer = new ObjectOutputStream(
+					socketClient.getOutputStream());
+			outToServer.writeObject(publicKey);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }
