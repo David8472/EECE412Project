@@ -1,3 +1,5 @@
+import vpn.VPN;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -30,13 +32,18 @@ public class GUI {
 
 	private static SocketClient sc;
 	private static SocketServer ss;
+	
 
+	
+	private static VPN vpn;
+	
     private JLabel sharedSecretValLabel = new JLabel("Shared Secret Value: ");
 
 	/**
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
+		vpn.generateKeys();
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
@@ -105,6 +112,8 @@ public class GUI {
 					int hostPort = Integer.valueOf(clientPort.getText());
 					sc = new SocketClient(hostName, hostPort);
                     sc.connect();
+                    sc.sendPublicKey();
+                    ss.sendPublicKey();
 				} catch (UnknownHostException e) {
 					displayClientText("*Host unknown. Cannot establish connection*");
 				} catch (IOException e) {
@@ -113,13 +122,21 @@ public class GUI {
 			}
 		});
         // shared secret value field
-        JTextField secretValueField = new JTextField();
+        final JTextField secretValueField = new JTextField();
         secretValueField.setColumns(20);
 
         clientConnectionPanel.add(sharedSecretValLabel);
         clientConnectionPanel.add(secretValueField);
 
         JButton secretValBtn = new JButton("Set secret value");
+        secretValBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                String key_val = secretValueField.getText();
+                int key = Integer.parseInt(key_val);
+                vpn.setPrivateKey(key);
+            }
+        });
         clientConnectionPanel.add(secretValBtn);
 
 		// Client message panel
@@ -137,11 +154,22 @@ public class GUI {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 String message = clientMessageField.getText();
+              
 
+                
                 if (message == null || message.equals("")) {
                     throw new NullPointerException("Error: please specify a message");
                 }
-
+                
+//                //encrypting the message
+//    //            vpn.setMessage(message);
+//    //          vpn.setEncryptedMessage(vpn.encrypt(vpn.getMessage()));
+//   //             message = new String(vpn.getEncryptedMessage());
+//               char[] encrypted_msg =vpn.encrypt(message);
+//               message = new String(encrypted_msg);
+//               char[] signed_msg = vpn.sign_signature(message, encrypted_msg);
+//               message = new String(signed_msg);
+            		   
                 try {
                     sc.sendMessage(message);
                 } catch(IOException e) {
@@ -250,6 +278,13 @@ public class GUI {
 
 		// Server button to send message
 		JButton serverSendMessage = new JButton("Send message");
+        serverSendMessage.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                ss.sendMessage(serverMessageField.getText());
+            }
+        });
+
 		serverMsgPanel.add(serverSendMessage);
 
         // shared secret value field
