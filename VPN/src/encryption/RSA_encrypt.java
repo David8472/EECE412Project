@@ -1,10 +1,9 @@
 package encryption;
 
+import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-
-import org.apache.commons.codec.binary.Base64;
-
 import java.io.UnsupportedEncodingException;
 import java.security.*;
 
@@ -63,13 +62,13 @@ public class RSA_encrypt {
 		} catch (Exception e) {
 
 		}
-		return new Base64().encodeAsString(cipherText);
+		return new Base64().encode(cipherText);
 	}
 
 	public static String decrypt(String ciphertext, Key private_key) {
 
 		byte[] plaintext = null;
-		byte[] encryptedTextBytes = Base64.decodeBase64(ciphertext);
+		byte[] encryptedTextBytes = Base64.decode(ciphertext);
 
 		try {
 			Cipher c = Cipher.getInstance("RSA");

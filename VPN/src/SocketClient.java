@@ -1,18 +1,12 @@
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStreamWriter;
+import encryption.RSA_encrypt;
+
+import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-
-import encryption.RSA_encrypt;
 
 public class SocketClient {
 
