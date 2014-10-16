@@ -28,8 +28,18 @@ public class SocketServer {
 		try {
 			KeyPairGenerator kg = KeyPairGenerator.getInstance("RSA");
 			KeyPair kp = kg.generateKeyPair();
+
 			this.publicKey = kp.getPublic();
+			GUI.nextStep("server", "=Generating server public key");
+			GUI.displayServerText("Server Public Key:"
+					+ this.publicKey.toString());
+			GUI.nextStep("", "");
+
 			this.privateKey = kp.getPrivate();
+			GUI.nextStep("server", "=Generating server private key");
+			GUI.displayServerText("Server Private Key: "
+					+ this.privateKey.toString());
+			GUI.nextStep("", "");
 
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
@@ -51,7 +61,7 @@ public class SocketServer {
 			@Override
 			public void run() {
 
-				System.out.println("Waiting for clients...");
+				GUI.displayServerText("=Waiting for clients...");
 				Socket client = null;
 
 				try {
@@ -59,25 +69,24 @@ public class SocketServer {
 						Socket clientSocket = serverSocket.accept();
 						GUI.getProgressBar().setIndeterminate(false);
 						GUI.getProgressBar().setValue(100);
-						GUI.getProgressBar()
-								.setString("Connection established");
+						GUI.displayServerText("=Connection established");
 						Toolkit.getDefaultToolkit().beep();
 						handler = new SocketClientHandler(clientSocket,
 								privateKey);
+						sendPublicKey();
+						handler.readPublicKey();
+						handler.readResponse();
 						clientProcessingPool.submit(handler);
-						System.out
-								.println("The following client has connected:"
-										+ clientSocket.getInetAddress()
-												.getCanonicalHostName());
+						GUI.displayServerText("=The following client has connected:"
+								+ clientSocket.getInetAddress()
+										.getCanonicalHostName());
 
 					}
 				} catch (Exception e) {
-					System.err
-							.println("Unable to process client request. Socket closed");
+					GUI.displayServerText("*Unable to process client request. Socket closed*");
 				}
 			}
 		};
-
 		// Runs server on a seperate thread
 		Thread serverThread = new Thread(serverTask);
 		serverThread.start();
@@ -90,8 +99,9 @@ public class SocketServer {
 	 */
 	public void sendMessageToHandler(String message) {
 		try {
+			GUI.nextStep("server", "=Encrypt server message");
 			String encryptedMsg = RSA_encrypt.encrypt(message, clientPublicKey);
-			GUI.nextStep(encryptedMsg, "Server Encrypted Message");
+			GUI.displayServerText("Encrypted message: " + encryptedMsg);
 			handler.sendMessage(encryptedMsg);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -120,6 +130,5 @@ public class SocketServer {
 	public void close() throws IOException, NullPointerException {
 		serverSocket.close();
 		GUI.getProgressBar().setIndeterminate(false);
-		GUI.getProgressBar().setString("No client connected.");
 	}
 }

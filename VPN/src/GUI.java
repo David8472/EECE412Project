@@ -57,6 +57,10 @@ public class GUI {
 
 	public static String[] options = { "Next Step" };
 
+	public enum UserType {
+		client, server;
+	}
+
 	/*
 	 * Launch the application.
 	 */
@@ -157,8 +161,6 @@ public class GUI {
 					int hostPort = Integer.valueOf(clientPort.getText());
 					sc = new SocketClient(hostName, hostPort);
 					sc.connect();
-					sc.sendPublicKey();
-					ss.sendPublicKey();
 				} catch (UnknownHostException e) {
 					displayClientText("*Host unknown. Cannot establish connection*");
 				} catch (IOException e) {
@@ -201,6 +203,7 @@ public class GUI {
 				final String message = clientMessageField.getText();
 
 				if (message == null || message.equals("")) {
+					GUI.displayClientText("*Error: please specify a message");
 					throw new NullPointerException(
 							"Error: please specify a message");
 				}
@@ -232,6 +235,7 @@ public class GUI {
 
 		// Client display
 		clientText = new TextArea("Hello World.");
+		clientText.setEditable(false);
 		clientDisplay.add(clientText);
 
 		parent.addTab(CLIENTPANEL, clientPanel);
@@ -260,12 +264,13 @@ public class GUI {
 							.getText());
 					// initializing the Socket Server
 					ss = new SocketServer(portNumber);
+					GUI.nextStep("server",
+							"=Starting the socket server at port: "
+									+ portNumber);
 					ss.start();
-					displayServerText("Starting the socket server at port:"
-							+ portNumber);
 					progressBar.setIndeterminate(true);
 				} catch (IOException e) {
-					displayServerText("Unable to read.");
+					displayServerText("*Socket connection already opened*.");
 					e.printStackTrace();
 				} catch (NumberFormatException e) {
 					displayServerText("*Invalid port number*");
@@ -352,6 +357,7 @@ public class GUI {
 
 		// Server display
 		serverText = new TextArea("Hello Server.");
+		serverText.setEditable(false);
 		serverDisplay.add(serverText);
 	}
 
@@ -410,12 +416,23 @@ public class GUI {
 	}
 
 	/**
-	 * Displays string s with the given window title
+	 * Displays string s in type's text area
 	 * 
+	 * @param type
 	 * @param s
 	 * @param title
 	 */
-	public static void nextStep(String s, String title) {
+	public static void nextStep(String type, String s) {
+		switch (type.toLowerCase()) {
+		case "client":
+			displayClientText(s);
+			break;
+		case "server":
+			displayServerText(s);
+			break;
+		default:
+			break;
+		}
 		JOptionPane.showOptionDialog(confPane, "", "", JOptionPane.NO_OPTION,
 				JOptionPane.NO_OPTION, null, options, options[0]);
 	}
