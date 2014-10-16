@@ -87,10 +87,10 @@ public class SocketClient {
 	public void sendMessage(String message) throws IOException {
 		if (serverPublicKey != null) {
 			try {
-				GUI.nextStep("client", "=Encrypt text");
+				GUI.nextStep("client", "=Encrypt message");
 				String encryptedText = RSA_encrypt.encrypt(message,
 						serverPublicKey);
-				GUI.displayClientText("Encrypted text: " + encryptedText);
+				GUI.displayClientText("Encrypted message: " + encryptedText);
 				GUI.nextStep("client", "=Send message to server");
 				BufferedWriter writer = new BufferedWriter(
 						new OutputStreamWriter(socketClient.getOutputStream()));
@@ -131,6 +131,20 @@ public class SocketClient {
 	}
 
 	/**
+	 * Sends the public key
+	 */
+	public void sendPublicKey() {
+		try {
+			GUI.nextStep("client", "=Send client public key to server");
+			ObjectOutputStream outToServer = new ObjectOutputStream(
+					socketClient.getOutputStream());
+			outToServer.writeObject(publicKey);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
 	 * Reads the public key
 	 */
 	public void readPublicKey() throws IOException {
@@ -142,20 +156,6 @@ public class SocketClient {
 			GUI.displayClientText("Server public key: "
 					+ serverPublicKey.toString());
 		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Sends the public key
-	 */
-	public void sendPublicKey() {
-		try {
-			GUI.nextStep("client", "=Send client public key to server");
-			ObjectOutputStream outToServer = new ObjectOutputStream(
-					socketClient.getOutputStream());
-			outToServer.writeObject(publicKey);
-		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}

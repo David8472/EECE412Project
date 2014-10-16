@@ -72,6 +72,22 @@ public class SocketClientHandler implements Runnable {
 	}
 
 	/**
+	 * Sends the public key to client
+	 * 
+	 * @param publicKey
+	 */
+	public void sendPublicKey(Key publicKey) {
+		try {
+			GUI.nextStep("server", "=Send server public key");
+			ObjectOutputStream outToServer = new ObjectOutputStream(
+					client.getOutputStream());
+			outToServer.writeObject(publicKey);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
 	 * Reads a public key
 	 * 
 	 * @return publicKey
@@ -97,21 +113,4 @@ public class SocketClientHandler implements Runnable {
 
 		return publicKey;
 	}
-
-	/**
-	 * Sends the public key to client
-	 * 
-	 * @param publicKey
-	 */
-	public void sendPublicKey(Key publicKey) {
-		try {
-			GUI.nextStep("server", "=Send server public key");
-			ObjectOutputStream outToServer = new ObjectOutputStream(
-					client.getOutputStream());
-			outToServer.writeObject(publicKey);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 }
