@@ -1,7 +1,9 @@
 import encryption.RSA_encrypt;
+import vpn.PrimeGenerator;
 
 import java.awt.*;
 import java.io.*;
+import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.Key;
@@ -17,8 +19,11 @@ public class SocketServer {
 	private SocketClientHandler handler;
 
 	private int port;
+    public static int dhSecret;
 
-	private Key publicKey;
+    private BigInteger dhPow;
+    public static BigInteger dhMod;
+	public static Key publicKey;
 	private Key privateKey;
 
 	public static Key clientPublicKey;
@@ -26,6 +31,13 @@ public class SocketServer {
 	public SocketServer(int port) {
 		this.port = port;
 		try {
+            PrimeGenerator pg = new PrimeGenerator();
+            pg.generatePrimes();
+
+
+            this.dhPow = BigInteger.valueOf(pg.getPrimeOne());
+            this.dhMod = BigInteger.valueOf(pg.getPrimeTwo());
+
 			KeyPairGenerator kg = KeyPairGenerator.getInstance("RSA");
 			KeyPair kp = kg.generateKeyPair();
 
@@ -40,6 +52,7 @@ public class SocketServer {
 			GUI.displayServerText("Server Private Key: "
 					+ this.privateKey.toString());
 			GUI.nextStep("", "");
+
 
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
@@ -73,6 +86,7 @@ public class SocketServer {
 						Toolkit.getDefaultToolkit().beep();
 						handler = new SocketClientHandler(clientSocket,
 								privateKey);
+
 						sendPublicKey();
 						handler.readPublicKey();
 						handler.readResponse();
@@ -131,4 +145,22 @@ public class SocketServer {
 		serverSocket.close();
 		GUI.getProgressBar().setIndeterminate(false);
 	}
+
+    public void sendAuthData() {
+        while (handler == null) {
+//            System.out.println("Waiting for handler...");
+        }
+
+        if (dhSecret > 0)  {
+            BigInteger B = RSA_encrypt.getDHNumToSend(dhSecret, dhPow, dhMod);
+            System.out.println("B " + B);
+            handler.sendAuthData(dhPow, dhMod, B);
+        } else {
+
+        }
+    }
+
+    public void setSecret(int secret) {
+        this.dhSecret = secret;
+    }
 }

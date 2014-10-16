@@ -1,5 +1,4 @@
 package vpn;
-import java.math.BigInteger;
 import java.util.Random;
 
 public class PrimeGenerator {
@@ -7,7 +6,7 @@ public class PrimeGenerator {
 	private int primeTwo;
 	Random random = new Random();
 	boolean done = false;
-	void generatePrimes(){
+	public void generatePrimes(){
 		
 		while(!done){
 			primeOne = random.nextInt(200)+100;
@@ -27,11 +26,11 @@ public class PrimeGenerator {
 		}
 	}
 	
-	int getPrimeOne(){
+	public int getPrimeOne(){
 		return primeOne;
 	}	
 	
-	int getPrimeTwo(){
+	public int getPrimeTwo(){
 		return primeTwo;
 	}
 	

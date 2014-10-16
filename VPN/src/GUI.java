@@ -1,7 +1,7 @@
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.EventQueue;
-import java.awt.TextArea;
+import vpn.VPN;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -10,19 +10,6 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
-
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
-
-import vpn.VPN;
 
 public class GUI {
 
@@ -44,6 +31,7 @@ public class GUI {
 	private static JTextField serverPort;
 	private static JTextField serverMessageField;
 	private static TextArea serverText;
+    private static JTextField serverSecretField;
 
 	private static JProgressBar progressBar;
 
@@ -182,6 +170,8 @@ public class GUI {
 				String key_val = secretValueField.getText();
 				int key = Integer.parseInt(key_val);
 				vpn.setPrivateKey(key);
+
+                sc.setSecret(key);
 			}
 		});
 		clientConnectionPanel.add(secretValBtn);
@@ -342,14 +332,25 @@ public class GUI {
 		serverMsgPanel.add(serverSendMessage);
 
 		// shared secret value field
-		JTextField secretValueField = new JTextField();
-		secretValueField.setColumns(20);
+		serverSecretField = new JTextField();
+        serverSecretField.setColumns(20);
 
 		serverMsgPanel.add(serverSecretVal);
-		serverMsgPanel.add(secretValueField);
+		serverMsgPanel.add(serverSecretField);
 
 		JButton secretValBtn = new JButton("Set secret value");
 		serverMsgPanel.add(secretValBtn);
+
+        secretValBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                String key_val = serverSecretField.getText();
+                int key = Integer.parseInt(key_val);
+
+                ss.setSecret(key);
+                ss.sendAuthData();
+            }
+        });
 
 		JPanel serverDisplay = new JPanel();
 		serverPanel.add(serverDisplay, BorderLayout.SOUTH);
@@ -375,11 +376,11 @@ public class GUI {
 		// Get ip button
 		JButton getIpButton = new JButton("Get IP");
 		getIpButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				getIP();
-			}
-		});
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                getIP();
+            }
+        });
 
 		ipPane = new JPanel();
 		ipPane.setLayout(new BoxLayout(ipPane, BoxLayout.Y_AXIS));
@@ -420,19 +421,14 @@ public class GUI {
 	 * 
 	 * @param type
 	 * @param s
-	 * @param title
 	 */
 	public static void nextStep(String type, String s) {
-		switch (type.toLowerCase()) {
-		case "client":
-			displayClientText(s);
-			break;
-		case "server":
-			displayServerText(s);
-			break;
-		default:
-			break;
-		}
+        if (type.toLowerCase().equals("client")) {
+            displayClientText(s);
+        } else if (type.toLowerCase().equals("server")) {
+            displayServerText(s);
+        }
+
 		JOptionPane.showOptionDialog(confPane, "", "", JOptionPane.NO_OPTION,
 				JOptionPane.NO_OPTION, null, options, options[0]);
 	}

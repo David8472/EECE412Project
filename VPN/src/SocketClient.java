@@ -1,10 +1,7 @@
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStreamWriter;
+import encryption.RSA_encrypt;
+
+import java.io.*;
+import java.math.BigInteger;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.Key;
@@ -12,19 +9,22 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 
-import encryption.RSA_encrypt;
-
 public class SocketClient {
 
-	private Socket socketClient;
+    private String hostname;
+    private int port;
+    Socket socketClient;
+    private Key publicKey;
+    private Key privateKey;
 
-	private String hostname;
-	private int port;
+    private Key serverPublicKey;
+    private int dhSecret = -1;
 
-	private Key publicKey;
-	private Key privateKey;
+    private BigInteger dhPow;
+    private BigInteger dhMod;
+    private BigInteger B;
 
-	private Key serverPublicKey;
+    private BigInteger result;
 
 	public SocketClient(String hostname, int port) {
 		this.hostname = hostname;
@@ -65,6 +65,19 @@ public class SocketClient {
 			@Override
 			public void run() {
 				try {
+                    readAuthData();
+
+                    while (dhPow == null || dhMod == null || dhSecret <=0 || B == null) {
+
+                    }
+
+                    BigInteger A = RSA_encrypt.getDHNumToSend(dhSecret, dhPow, dhMod);
+                    BigInteger result = RSA_encrypt.getDHNumToSend(dhSecret, B, dhMod);
+
+                    Object[] objs = new Object[] {A, result};
+                    sendObject(objs);
+
+
 					readPublicKey();
 					sendPublicKey();
 					readResponse();
@@ -129,6 +142,40 @@ public class SocketClient {
 			GUI.displayClientText("Decrypted server message " + decryptedText);
 		}
 	}
+
+    public void readAuthData() throws IOException {
+        try {
+            ObjectInputStream inFromServer = new ObjectInputStream(socketClient.getInputStream());
+            dhPow = (BigInteger) inFromServer.readObject();
+            dhMod = (BigInteger) inFromServer.readObject();
+            B = (BigInteger) inFromServer.readObject();
+
+            System.out.println("Diffie-Hellman power " + dhPow);
+            System.out.println("Diffie-Hellman mod " + dhMod);
+            System.out.println("B from server: " + B);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setSecret(int secret) {
+        this.dhSecret = secret;
+    }
+
+    public void sendObject(Object[] objs) {
+        try {
+            ObjectOutputStream outToServer = new ObjectOutputStream(socketClient.getOutputStream());
+            for (Object o : objs) {
+                outToServer.writeObject(o);
+                outToServer.reset();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 	/**
 	 * Sends the public key

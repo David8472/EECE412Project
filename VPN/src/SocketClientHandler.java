@@ -1,22 +1,28 @@
 import encryption.RSA_encrypt;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.net.Socket;
 import java.security.Key;
 
 public class SocketClientHandler implements Runnable {
 
-	private Socket client;
-	private Key privateKey;
+    private Socket client;
+    private Key privateKey;
+    private BigInteger A;
+    public boolean authenticated;
 
 	public SocketClientHandler(Socket client, Key privateKey) {
 		this.client = client;
 		this.privateKey = privateKey;
+        this.authenticated = false;
 	}
 
 	@Override
 	public void run() {
 		try {
+            verifyAuth();
+
 			readPublicKey();
 			readResponse();
 		} catch (IOException e) {
@@ -25,6 +31,59 @@ public class SocketClientHandler implements Runnable {
 			e.printStackTrace();
 		}
 	}
+
+    public void verifyAuth() throws IOException {
+        try {
+            ObjectInputStream inFromServer = new ObjectInputStream(client.getInputStream());
+            A = (BigInteger) inFromServer.readObject();
+            BigInteger result =  (BigInteger)inFromServer.readObject();
+
+
+            BigInteger myresult = RSA_encrypt.getDHNumToSend(SocketServer.dhSecret, A, SocketServer.dhMod);
+
+            System.out.println("A from client:" + A);
+            System.out.println("Result from client:" + result + " compare " + myresult);
+
+            if (result.equals(myresult)) {
+                System.out.println("Authenticated");
+                GUI.displayClientText("You have been authenticated by the server");
+                GUI.displayServerText("This client has been authenticated");
+
+                this.authenticated = true;
+            }
+
+            else {
+                GUI.displayClientText("Client unauthorized");
+                GUI.displayServerText("Your are not authenticated");
+            }
+
+
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendAuthData(BigInteger p, BigInteger g, BigInteger B) {
+        try {
+
+
+            System.out.println("p:" +p + ", g:" + g);
+            ObjectOutputStream outToServer = new ObjectOutputStream(client.getOutputStream());
+
+            outToServer.writeObject(p);
+            outToServer.reset();
+
+            outToServer.writeObject(g);
+            outToServer.reset();
+
+            outToServer.writeObject(B);
+            outToServer.reset();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 	/**
 	 * Sends message to client through buffer
